@@ -608,22 +608,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        popupMenuTheme: PopupMenuThemeData(
-          color: Colors.white.withOpacity(0.8), // Ajusta la opacidad aquí
-        ),
-      ),
-      home: HomeScreen(),
-    );
-  }
-}
