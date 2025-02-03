@@ -1,8 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:warudu_web_app/widgets/admin_widget.dart';
 import '../colors.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +15,44 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool isChecked = false;
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool _isPasswordVisible = false; // visibilidad de la contraseña
+  int userType = 0;
+  String email = "";
+  String password = "";
+
+  Future<void> _login() async {
+    email = emailController.text;
+    password = passwordController.text;
+
+    final response = await http.post(
+        Uri.parse('$baseUrl/login_administrador'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+          'user_type': userType,
+        }));
+
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      String username = data['username'];
+
+      if (mounted) {
+        Navigator.pushNamed(context, '/admin_widget');
+      }
+      print('Solicitud exitosa');
+      print(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Inicio de Exitoso')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Credenciales no Validas')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       SizedBox(height: 10),
                       TextField(
+                        controller: emailController,
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: cream,
@@ -75,7 +116,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       SizedBox(height: 10),
                       TextField(
-                        obscureText: true,
+                        controller: passwordController,
+                        obscureText:
+                            !_isPasswordVisible, // Control visibilidad de la contraseña
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: cream,
@@ -85,10 +128,19 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           suffixIcon: Padding(
                             padding: const EdgeInsets.only(right: 5.0),
-                            child: Icon(
-                              Icons.visibility_outlined,
-                              color: coral,
-                              size: 30.0,
+                            child: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: coral,
+                                size: 30.0,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
                             ),
                           ),
                         ),
@@ -129,11 +181,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              CupertinoPageRoute(
-                                  builder: (context) => AdminWidget()),
-                            );
+                            setState(() {
+                              _login();
+                            });
                           },
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
