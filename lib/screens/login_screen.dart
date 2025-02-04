@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:warudu_web_app/widgets/admin_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:warudu_web_app/providers/auth_provider.dart'; // Importa AuthProvider
 import '../colors.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -18,13 +20,21 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _isPasswordVisible = false; // visibilidad de la contraseña
-  int userType = 0;
+  int userType = 2; // Tipo de usuario administrador (asegúrate que sea el correcto)
   String email = "";
   String password = "";
 
   Future<void> _login() async {
     email = emailController.text;
     password = passwordController.text;
+
+    // Verificación de campos vacíos
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor, complete todos los campos')),
+      );
+      return;
+    }
 
     final response = await http.post(
         Uri.parse('$baseUrl/login_administrador'),
@@ -39,17 +49,25 @@ class _LoginScreenState extends State<LoginScreen> {
       var data = jsonDecode(response.body);
       String username = data['username'];
 
+      // Almacenar el estado de autenticación
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isAuthenticated', true);
+
+      // Actualizar el estado de autenticación en el AuthProvider
+      Provider.of<AuthProvider>(context, listen: false).login();
+
       if (mounted) {
         Navigator.pushNamed(context, '/admin_widget');
       }
       print('Solicitud exitosa');
       print(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Inicio de Exitoso')),
+        SnackBar(content: Text('Inicio de sesión exitoso')),
       );
     } else {
+      print('Error en la respuesta: ${response.body}');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Credenciales no Validas')),
+        SnackBar(content: Text('Credenciales no válidas')),
       );
     }
   }
@@ -181,9 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         child: OutlinedButton(
                           onPressed: () {
-                            setState(() {
-                              _login();
-                            });
+                            _login();
                           },
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(

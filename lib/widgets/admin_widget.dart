@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:warudu_web_app/colors.dart';
 import 'package:warudu_web_app/screens/add_dish_screen.dart';
 import 'package:warudu_web_app/screens/add_ingredient_screen.dart';
 import 'package:warudu_web_app/screens/add_user_screen.dart';
 import 'package:warudu_web_app/screens/user_table_screen.dart';
 import 'package:warudu_web_app/screens/ingredient_table_screen.dart';
-import '../screens/dish_table_screen.dart';
-import '../constants.dart';
+import 'package:warudu_web_app/screens/dish_table_screen.dart';
+import 'package:warudu_web_app/providers/auth_provider.dart';
 
-// Lista de entradas con iconos y textos para el NavigationRail
 const List<Map<String, dynamic>> entries = [
   {'texto': 'Platillos', 'icono': Icons.restaurant_menu},
   {'texto': 'Ingredientes', 'icono': Icons.kitchen},
@@ -30,10 +30,10 @@ class AdminWidget extends StatefulWidget {
   });
 
   @override
-  State<AdminWidget> createState() => _AdminScreenState();
+  State<AdminWidget> createState() => _AdminWidgetState();
 }
 
-class _AdminScreenState extends State<AdminWidget> {
+class _AdminWidgetState extends State<AdminWidget> {
   late int selectedIndex;
   int lastMainSelectedIndex = 0;
   Map<String, dynamic>? currentUserToEdit;
@@ -64,18 +64,19 @@ class _AdminScreenState extends State<AdminWidget> {
     });
   }
 
-  void _editDish(Map<String, dynamic> dish) =>
-      changeScreen(3, dishToEdit: dish);
-
-  void _editIngredient(Map<String, dynamic> ingredient) =>
-      changeScreen(4, ingredientToEdit: ingredient);
-
-  void _editUser(Map<String, dynamic> user) =>
-      changeScreen(5, userToEdit: user);
+  void _editDish(Map<String, dynamic> dish) => changeScreen(3, dishToEdit: dish);
+  void _editIngredient(Map<String, dynamic> ingredient) => changeScreen(4, ingredientToEdit: ingredient);
+  void _editUser(Map<String, dynamic> user) => changeScreen(5, userToEdit: user);
 
   @override
   Widget build(BuildContext context) {
-    // Selección de pantalla basada en el índice seleccionado
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    if (!authProvider.isAuthenticated) {
+      Future.microtask(() => Navigator.pushReplacementNamed(context, '/login_screen'));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     Widget page;
     switch (selectedIndex) {
       case 0:
@@ -88,14 +89,12 @@ class _AdminScreenState extends State<AdminWidget> {
         page = IngredientTableScreen(
           onAddPressed: () => changeScreen(4),
           onEditPressed: _editIngredient,
-          // onDeletePressed: (ingredient) => _deleteItem('ingredientes', ingredient),
         );
         break;
       case 2:
         page = UserTableScreen(
           onAddPressed: () => changeScreen(5),
           onEditPressed: _editUser,
-          // onDeletePressed: (user) => _deleteItem('usuarios', user),
         );
         break;
       case 3:
@@ -125,18 +124,13 @@ class _AdminScreenState extends State<AdminWidget> {
         return Scaffold(
           body: Row(
             children: [
-              // Línea naranja izquierda
-              Container(
-                width: 14,
-                color: coral,
-              ),
+              Container(width: 14, color: coral),
               SafeArea(
                 child: Container(
                   color: green,
                   width: constraints.maxWidth >= 1000 ? 250 : 72,
                   child: Column(
                     children: [
-                      // Logo y título "Warudu" cuando el NavigationRail está extendido
                       if (constraints.maxWidth >= 1000)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 20.0),
@@ -157,10 +151,8 @@ class _AdminScreenState extends State<AdminWidget> {
                                   color: cream,
                                 ),
                               ),
-                              // Línea decorativa debajo del logo
                               Container(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 10.0),
+                                margin: const EdgeInsets.symmetric(vertical: 10.0),
                                 height: 6,
                                 width: 180,
                                 color: coral,
@@ -168,7 +160,6 @@ class _AdminScreenState extends State<AdminWidget> {
                             ],
                           ),
                         ),
-                      // NavigationRail con destinos generados desde entries
                       Expanded(
                         child: NavigationRail(
                           extended: constraints.maxWidth >= 1000,
@@ -188,25 +179,34 @@ class _AdminScreenState extends State<AdminWidget> {
                                 ),
                               ),
                           ],
-                          selectedIndex: selectedIndex < 3
-                              ? selectedIndex
-                              : lastMainSelectedIndex,
+                          selectedIndex: selectedIndex < 3 ? selectedIndex : lastMainSelectedIndex,
                           onDestinationSelected: (value) {
                             changeScreen(value);
                           },
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      // Botón de cerrar sesión
+                      TextButton.icon(
+                        onPressed: () {
+                          authProvider.logout();
+                          Navigator.pushReplacementNamed(context, '/login_screen');
+                        },
+                        icon: Icon(Icons.logout, color: cream),
+                        label: Text(
+                          'Cerrar sesión',
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            color: cream,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
               ),
-              // Contenido Principal
-              Expanded(
-                child: Container(
-                  color: cream,
-                  child: page,
-                ),
-              ),
+              Expanded(child: Container(color: cream, child: page)),
             ],
           ),
         );
