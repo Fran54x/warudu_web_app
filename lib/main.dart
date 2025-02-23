@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:warudu_web_app/screens/home_screen.dart';
-import 'package:warudu_web_app/widgets/admin_widget.dart';
 import 'package:warudu_web_app/screens/login_screen.dart';
-import 'package:warudu_web_app/providers/auth_provider.dart'; // Importamos el AuthProvider
+import 'package:warudu_web_app/widgets/admin_widget.dart';
+import 'package:warudu_web_app/providers/auth_provider.dart';
+import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
-//flutter run -d chrome --web-port 8000
 void main() {
+  setUrlStrategy(PathUrlStrategy());
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(),
@@ -18,17 +21,31 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/login_screen',
-      routes: {
-        '/login_screen': (BuildContext context) => LoginScreen(),
-        '/': (BuildContext context) => HomeScreen(),
-        '/admin_widget': (BuildContext context) => AuthGuard(child: AdminWidget()), // Ruta protegida
-      },
+      routerConfig: _router,
     );
   }
 }
+
+// Configuración de GoRouter
+final GoRouter _router = GoRouter(
+  initialLocation: '/home',
+  routes: [
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => HomeScreen(),
+    ),
+    GoRoute(
+      path: '/login_screen',
+      builder: (context, state) => LoginScreen(),
+    ),
+    GoRoute(
+      path: '/admin_widget',
+      builder: (context, state) => AuthGuard(child: AdminWidget()),
+    ),
+  ],
+);
 
 // Middleware para proteger rutas
 class AuthGuard extends StatelessWidget {
@@ -39,9 +56,8 @@ class AuthGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
-    // Si no está autenticado, lo redirige al Login
     if (!authProvider.isAuthenticated) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, '/login_screen'));
+      Future.microtask(() => context.go('/login_screen'));
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 

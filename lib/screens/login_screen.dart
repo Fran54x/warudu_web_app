@@ -20,7 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _isPasswordVisible = false; // visibilidad de la contraseña
-  int userType = 2; // Tipo de usuario administrador (asegúrate que sea el correcto)
+  int userType =
+      2; // Tipo de usuario administrador (asegúrate que sea el correcto)
   String email = "";
   String password = "";
 
@@ -36,8 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final response = await http.post(
-        Uri.parse('$baseUrl/login_administrador'),
+    final response = await http.post(Uri.parse('$baseUrl/login_administrador'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
@@ -234,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 Positioned.fill(
                   child: Image.asset(
-                    '../assets/images/kitchen_utensils.jpg', // Ruta de la imagen de fondo
+                    'assets/images/kitchen_utensils.jpg', // Ruta de la imagen de fondo
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -250,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Image.asset(
-                          '../assets/images/warudu_logo_crema.png',
+                          'assets/images/warudu_logo_crema.png',
                           width: 320,
                           height: 320,
                         ),
