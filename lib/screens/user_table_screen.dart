@@ -1,19 +1,115 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:warudu_web_app/components/icon_button.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../colors.dart';
 import '../widgets/table_widget.dart';
+import '../constants.dart';
 
-class UserTableScreen extends StatelessWidget {
-  final List<Map<String, String>> users = [
-    {'id': '1', 'nombre': 'Luis Daniel', 'correo': 'daniel@gmail.com'},
-    {'id': '2', 'nombre': 'Frijoles Charros', 'correo': 'erick@gmail.com'},
-    {'id': '3', 'nombre': 'Pollo con Arroz', 'correo': 'mau@gmail.com'},
-    {'id': '4', 'nombre': 'Luis Francisco', 'correo': 'fran@gmail.com'},
-  ];
+class UserTableScreen extends StatefulWidget {
+  final VoidCallback onAddPressed; // Callback para agregar usuario
+  final Function(Map<String, dynamic>) onEditPressed; // Callback para editar usuario
 
-  final VoidCallback onAddPressed; //callback
-  UserTableScreen({required this.onAddPressed});
+  UserTableScreen({required this.onAddPressed, required this.onEditPressed});
+
+  @override
+  _UserTableScreenState createState() => _UserTableScreenState();
+}
+
+class _UserTableScreenState extends State<UserTableScreen> {
+  List<Map<String, dynamic>> users = [];
+  List<Map<String, dynamic>> filteredUsers = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUsers();
+    _searchController.addListener(_filterUsers);
+  }
+
+  Future<void> fetchUsers() async {
+    final url = Uri.parse('$baseUrl/usuarios');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          users = data.map((user) {
+            return {
+              'id': user['id'].toString(),
+              'nombre': user['nombre'],
+              'correo': user['correo'],
+              'imagen': user['imagen'], // Asumiendo que también tienes la imagen
+              'password': user['password'],
+              'tipo_usuario': user['tipo_usuario'],
+            };
+          }).toList();
+          filteredUsers = users;
+        });
+      } else {
+        print('Error en la petición: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<void> deleteUser(Map<String, dynamic> user) async {
+    final url = Uri.parse('$baseUrl/eliminar_usuario/${user['id']}');
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          users.removeWhere((u) => u['id'] == user['id']);
+          filteredUsers = users;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Usuario eliminado exitosamente')),
+        );
+      } else {
+        print('Error en la petición: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void _filterUsers() {
+    setState(() {
+      if (_isNumeric(_searchController.text)) {
+        filteredUsers = users
+            .where((user) => user['id'].contains(_searchController.text))
+            .toList();
+      } else {
+        filteredUsers = users
+            .where((user) => user['nombre'].toLowerCase().contains(_searchController.text.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  bool _isNumeric(String s) {
+    if (s == null) {
+      return false;
+    }
+    return double.tryParse(s) != null;
+  }
+
+  void _editUser(Map<String, dynamic> user) {
+    widget.onEditPressed(user);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +134,7 @@ class UserTableScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -52,8 +149,7 @@ class UserTableScreen extends StatelessWidget {
               ),
               SizedBox(width: 60),
               ElevatedButton(
-                onPressed:
-                    onAddPressed, // Acción para agregar un nuevo platillo
+                onPressed: widget.onAddPressed, // Acción para agregar un nuevo usuario
                 style: ElevatedButton.styleFrom(
                   backgroundColor: coral,
                   padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
@@ -70,7 +166,7 @@ class UserTableScreen extends StatelessWidget {
             ],
           ),
           SizedBox(height: 20),
-          // Tabla de platillos con scroll
+          // Tabla de usuarios con scroll
           Expanded(
             child: SingleChildScrollView(
               child: Table(
@@ -92,8 +188,8 @@ class UserTableScreen extends StatelessWidget {
                       tableCellHeader(''),
                     ],
                   ),
-                  // Filas de la tabla
-                  for (var user in users)
+                  // Filas de la tabla filtrada
+                  for (var user in filteredUsers)
                     TableRow(
                       decoration: BoxDecoration(color: cream),
                       children: [
@@ -111,9 +207,9 @@ class UserTableScreen extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              iconButton(orange, "edit"),
+                              iconButton(orange, "edit", onPressed: () => _editUser(user)),
                               SizedBox(width: 10),
-                              iconButton(red, "delete"),
+                              iconButton(red, "delete", onPressed: () => deleteUser(user)),
                             ],
                           ),
                         ),

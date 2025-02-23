@@ -3,20 +3,113 @@ import 'package:google_fonts/google_fonts.dart';
 import '../colors.dart';
 import '../components/icon_button.dart';
 import '../widgets/table_widget.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../constants.dart';
 
-class DishTableScreen extends StatelessWidget {
-  final List<Map<String, String>> dishes = [
-    {'id': '1', 'nombre': 'Mole Poblano', 'tiempo': '22 min'},
-    {'id': '2', 'nombre': 'Frijoles Charros', 'tiempo': '15 min'},
-    {'id': '3', 'nombre': 'Pollo con Arroz', 'tiempo': '32 min'},
-    {'id': '4', 'nombre': 'Huevos Rancheros', 'tiempo': '16 min'},
-    {'id': '5', 'nombre': 'Chilaquiles Rojos', 'tiempo': '26 min'},
-    {'id': '6', 'nombre': 'Chile en Rajas', 'tiempo': '42 min'},
-    {'id': '7', 'nombre': 'Tacos de Birria', 'tiempo': '20 min'},
-  ];
+class DishTableScreen extends StatefulWidget {
+  final VoidCallback onAddPressed; // Callback para agregar un nuevo platillo
+  final Function(Map<String, dynamic>)
+      onEditPressed; // Callback para editar un platillo
 
-  final VoidCallback onAddPressed; // Nuevo parámetro callback
-  DishTableScreen({required this.onAddPressed});
+  DishTableScreen({required this.onAddPressed, required this.onEditPressed});
+
+  @override
+  _DishTableScreenState createState() => _DishTableScreenState();
+}
+
+class _DishTableScreenState extends State<DishTableScreen> {
+  List<Map<String, dynamic>> dishes = [];
+  List<Map<String, dynamic>> filteredDishes = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchDishes();
+    _searchController.addListener(_filterDishes);
+  }
+
+  Future<void> fetchDishes() async {
+    final url = Uri.parse('$baseUrl/platillos');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        setState(() {
+          dishes = data.map((dish) {
+            return {
+              'id': dish['id'].toString(),
+              'nombre': dish['nombre'],
+              'imagen': dish['imagen'],
+              'descripcion': dish['descripcion'],
+              'preparacion': dish['preparacion'],
+              'tiempo': dish['tiempo'].toString(),
+              'ingredientes': dish['ingredientes'],
+            };
+          }).toList();
+          filteredDishes = dishes;
+        });
+      } else {
+        print('Error en la petición: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  void _filterDishes() {
+    setState(() {
+      if (_isNumeric(_searchController.text)) {
+        filteredDishes = dishes
+            .where((dish) => dish['id'].contains(_searchController.text))
+            .toList();
+      } else {
+        filteredDishes = dishes
+            .where((dish) => dish['nombre']
+                .toLowerCase()
+                .contains(_searchController.text.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  bool _isNumeric(String s) {
+    if (s == null) {
+      return false;
+    }
+    return double.tryParse(s) != null;
+  }
+
+  Future<void> deleteDish(Map<String, dynamic> dish) async {
+    final url = Uri.parse('$baseUrl/eliminar_platillo/${dish['id']}');
+
+    try {
+      final response = await http.delete(url);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          dishes.removeWhere((d) => d['id'] == dish['id']);
+          filteredDishes = dishes;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Platillo eliminado exitosamente')),
+        );
+      } else {
+        print('Error en la petición: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +134,7 @@ class DishTableScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _searchController,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -55,8 +149,8 @@ class DishTableScreen extends StatelessWidget {
               ),
               SizedBox(width: 60),
               ElevatedButton(
-                onPressed:
-                    onAddPressed, // Acción para agregar un nuevo platillo
+                onPressed: widget
+                    .onAddPressed, // Acción para agregar un nuevo platillo
                 style: ElevatedButton.styleFrom(
                   backgroundColor: coral,
                   padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
@@ -95,8 +189,8 @@ class DishTableScreen extends StatelessWidget {
                       tableCellHeader(''),
                     ],
                   ),
-                  // Filas de la tabla
-                  for (var dish in dishes)
+                  // Filas de la tabla filtrada
+                  for (var dish in filteredDishes)
                     TableRow(
                       decoration: BoxDecoration(color: cream),
                       children: [
@@ -105,15 +199,17 @@ class DishTableScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: tableCell(dish['nombre']!, TextAlign.start),
                         ),
-                        tableCell(dish['tiempo']!, TextAlign.center),
+                        tableCell(dish['tiempo']! + " min", TextAlign.center),
                         Padding(
                           padding: const EdgeInsets.only(top: 6),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              iconButton(orange, "edit"),
+                              iconButton(orange, "edit",
+                                  onPressed: () => widget.onEditPressed(dish)),
                               SizedBox(width: 10),
-                              iconButton(red, "delete"),
+                              iconButton(red, "delete",
+                                  onPressed: () => deleteDish(dish)),
                             ],
                           ),
                         ),

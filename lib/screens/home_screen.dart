@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../colors.dart';
@@ -119,11 +118,11 @@ class HomeScreen extends StatelessWidget {
               width: double.infinity,
               child: Stack(
                 children: [
-                  FadeInImage.memoryNetwork(
+                  FadeInImage(
                     fadeInDuration: const Duration(seconds: 2),
-                    placeholder: kTransparentImage,
+                    placeholder: AssetImage('assets/images/pozole.jpg'),
                     fit: BoxFit.cover,
-                    image: 'assets/images/pozole.jpg',
+                    image: AssetImage('assets/images/pozole.jpg'),
                     width: double.infinity,
                     height: availableHeight,
                   ),
@@ -183,11 +182,13 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 child: ClipRRect(
                                   // Radio de las esquinas redondeadas
-                                  child: FadeInImage.memoryNetwork(
+                                  child: FadeInImage(
                                     fadeInDuration: const Duration(seconds: 2),
-                                    placeholder: kTransparentImage,
+                                    placeholder:
+                                        AssetImage('assets/images/pozole.jpg'),
                                     fit: BoxFit.cover,
-                                    image: 'assets/images/mole.jpg',
+                                    image:
+                                        AssetImage('assets/images/pozole.jpg'),
                                     width: screenWidth * 0.4,
                                   ),
                                 ),
@@ -246,11 +247,13 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 child: ClipRRect(
                                   // Radio de las esquinas redondeadas
-                                  child: FadeInImage.memoryNetwork(
+                                  child: FadeInImage(
                                     fadeInDuration: const Duration(seconds: 2),
-                                    placeholder: kTransparentImage,
+                                    placeholder:
+                                        AssetImage('assets/images/pozole.jpg'),
                                     fit: BoxFit.cover,
-                                    image: 'assets/images/mole.jpg',
+                                    image:
+                                        AssetImage('assets/images/pozole.jpg'),
                                     width: screenWidth * 0.4,
                                   ),
                                 ),
@@ -491,11 +494,12 @@ class HomeScreen extends StatelessWidget {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: FadeInImage.memoryNetwork(
+                                child: FadeInImage(
                                   fadeInDuration: const Duration(seconds: 2),
-                                  placeholder: kTransparentImage,
+                                  placeholder:
+                                      AssetImage('assets/images/pozole.jpg'),
                                   fit: BoxFit.cover,
-                                  image: 'assets/images/enchiladas.jfif',
+                                  image: AssetImage('assets/images/pozole.jpg'),
                                   width: constraints.maxWidth * 0.4,
                                 ),
                               ),
@@ -523,11 +527,12 @@ class HomeScreen extends StatelessWidget {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: FadeInImage.memoryNetwork(
+                                child: FadeInImage(
                                   fadeInDuration: const Duration(seconds: 2),
-                                  placeholder: kTransparentImage,
+                                  placeholder:
+                                      AssetImage('assets/images/pozole.jpg'),
                                   fit: BoxFit.cover,
-                                  image: 'assets/images/enchiladas.jfif',
+                                  image: AssetImage('assets/images/pozole.jpg'),
                                   width: constraints.maxWidth * 0.45,
                                 ),
                               ),
