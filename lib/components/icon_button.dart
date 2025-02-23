@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-ElevatedButton iconButton(Color color, String image) {
+ElevatedButton iconButton(Color color, String image, {required VoidCallback onPressed}) {
   return ElevatedButton(
-    onPressed: () {
-      //acción
-    },
+    onPressed: onPressed,
     style: ElevatedButton.styleFrom(
       backgroundColor: color,
       padding: EdgeInsets.symmetric(vertical: 12),
