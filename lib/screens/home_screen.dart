@@ -11,8 +11,7 @@ class HomeScreen extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double appBarHeight = 80.0;
     final double bottomBarHeight = 50.0;
-    final double availableHeight =
-        screenHeight - appBarHeight - bottomBarHeight;
+    final double availableHeight = screenHeight - appBarHeight;
 
     return Scaffold(
       appBar: AppBar(
@@ -114,13 +113,13 @@ class HomeScreen extends StatelessWidget {
             // Primera sección (Portada)
             Container(
               color: green,
-              //height: availableHeight,
               width: double.infinity,
               child: Stack(
                 children: [
                   FadeInImage(
                     fadeInDuration: const Duration(seconds: 2),
-                    placeholder: AssetImage('assets/images/pozole.jpg'),
+                    placeholder:
+                        AssetImage('assets/images/transparent_image.png'),
                     fit: BoxFit.cover,
                     image: AssetImage('assets/images/pozole.jpg'),
                     width: double.infinity,
@@ -184,11 +183,10 @@ class HomeScreen extends StatelessWidget {
                                   // Radio de las esquinas redondeadas
                                   child: FadeInImage(
                                     fadeInDuration: const Duration(seconds: 2),
-                                    placeholder:
-                                        AssetImage('assets/images/pozole.jpg'),
+                                    placeholder: AssetImage(
+                                        'assets/images/transparent_image.png'),
                                     fit: BoxFit.cover,
-                                    image:
-                                        AssetImage('assets/images/pozole.jpg'),
+                                    image: AssetImage('assets/images/mole.jpg'),
                                     width: screenWidth * 0.4,
                                   ),
                                 ),
@@ -249,11 +247,10 @@ class HomeScreen extends StatelessWidget {
                                   // Radio de las esquinas redondeadas
                                   child: FadeInImage(
                                     fadeInDuration: const Duration(seconds: 2),
-                                    placeholder:
-                                        AssetImage('assets/images/pozole.jpg'),
+                                    placeholder: AssetImage(
+                                        'assets/images/transparent_image.png'),
                                     fit: BoxFit.cover,
-                                    image:
-                                        AssetImage('assets/images/pozole.jpg'),
+                                    image: AssetImage('assets/images/mole.jpg'),
                                     width: screenWidth * 0.4,
                                   ),
                                 ),
@@ -345,7 +342,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 20),
                                 Image.asset(
-                                  'assets/images/google_play_button.jpg',
+                                  'assets/images/google_play_button.png',
                                   width: constraints.maxWidth * 0.2,
                                 ),
                               ],
@@ -397,7 +394,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 20),
                               Image.asset(
-                                'assets/images/google_play_button.jpg',
+                                'assets/images/google_play_button.png',
                                 width: constraints.maxWidth * 0.3,
                               ),
                             ],
@@ -496,10 +493,11 @@ class HomeScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 child: FadeInImage(
                                   fadeInDuration: const Duration(seconds: 2),
-                                  placeholder:
-                                      AssetImage('assets/images/pozole.jpg'),
+                                  placeholder: AssetImage(
+                                      'assets/images/transparent_image.png'),
                                   fit: BoxFit.cover,
-                                  image: AssetImage('assets/images/pozole.jpg'),
+                                  image: AssetImage(
+                                      'assets/images/enchiladas.jfif'),
                                   width: constraints.maxWidth * 0.4,
                                 ),
                               ),
@@ -529,10 +527,11 @@ class HomeScreen extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(12),
                                 child: FadeInImage(
                                   fadeInDuration: const Duration(seconds: 2),
-                                  placeholder:
-                                      AssetImage('assets/images/pozole.jpg'),
+                                  placeholder: AssetImage(
+                                      'assets/images/transparent_image.png'),
                                   fit: BoxFit.cover,
-                                  image: AssetImage('assets/images/pozole.jpg'),
+                                  image: AssetImage(
+                                      'assets/images/enchiladas.jfif'),
                                   width: constraints.maxWidth * 0.45,
                                 ),
                               ),
