@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-ElevatedButton iconButton(Color color, String image, {required VoidCallback onPressed}) {
+ElevatedButton iconButton(Color color, String image,
+    {required VoidCallback onPressed}) {
   return ElevatedButton(
     onPressed: onPressed,
     style: ElevatedButton.styleFrom(
@@ -11,7 +12,7 @@ ElevatedButton iconButton(Color color, String image, {required VoidCallback onPr
       ),
     ),
     child: Image.asset(
-      '../assets/images/$image.png',
+      'assets/images/$image.png',
       width: 30,
       height: 30,
     ),

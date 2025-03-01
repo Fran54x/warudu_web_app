@@ -7,12 +7,13 @@ import 'package:warudu_web_app/widgets/admin_widget.dart';
 import 'package:warudu_web_app/providers/auth_provider.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 
+//flutter run -d chrome --web-port 8000
 void main() {
-  setUrlStrategy(PathUrlStrategy());
-
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
+      ],
       child: MyApp(),
     ),
   );
@@ -56,8 +57,12 @@ class AuthGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
+    print("Estado autenticación: ${authProvider.isAuthenticated}"); // Debug
+
     if (!authProvider.isAuthenticated) {
-      Future.microtask(() => context.go('/login_screen'));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.go('/login_screen');
+      });
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 

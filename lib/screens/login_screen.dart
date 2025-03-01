@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:warudu_web_app/providers/auth_provider.dart'; // Importa AuthProvider
 import '../colors.dart';
 import 'dart:convert';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import '../constants.dart';
 
@@ -20,8 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _isPasswordVisible = false; // visibilidad de la contraseña
-  int userType =
-      2; // Tipo de usuario administrador (asegúrate que sea el correcto)
+  int userType = 0;
   String email = "";
   String password = "";
 
@@ -29,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
     email = emailController.text;
     password = passwordController.text;
 
-    // Verificación de campos vacíos
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Por favor, complete todos los campos')),
@@ -49,23 +48,24 @@ class _LoginScreenState extends State<LoginScreen> {
       var data = jsonDecode(response.body);
       String username = data['username'];
 
-      // Almacenar el estado de autenticación
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isAuthenticated', true);
 
-      // Actualizar el estado de autenticación en el AuthProvider
-      Provider.of<AuthProvider>(context, listen: false).login();
+      // Obtener el Provider y actualizar autenticación
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      authProvider.login();
+
+      print(
+          'Estado autenticación después de login: ${authProvider.isAuthenticated}');
 
       if (mounted) {
-        Navigator.pushNamed(context, '/admin_widget');
+        context.go('/admin_widget');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Inicio de sesión exitoso')),
+        );
       }
-      print('Solicitud exitosa');
-      print(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Inicio de sesión exitoso')),
-      );
     } else {
-      print('Error en la respuesta: ${response.body}');
+      //print('Error en la respuesta: ${response.body}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Credenciales no válidas')),
       );
