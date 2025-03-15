@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:warudu_web_app/screens/privacy_notice.dart';
 import '../colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -596,11 +597,31 @@ class HomeScreen extends StatelessWidget {
               color: green,
               child: Column(
                 children: [
-                  Text(
-                    "Pie de Página",
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      color: green,
+                  Material(
+                    color: Colors
+                        .transparent, // Necesario para que `InkWell` funcione bien
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => PrivacyNotice()),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(
+                            8.0), // Para que el área táctil sea mayor
+                        child: Text(
+                          "Aviso de Privacidad",
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            color: Colors
+                                .white, // Color visible sobre el fondo verde
+                            decoration:
+                                TextDecoration.underline, // Simula un enlace
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
