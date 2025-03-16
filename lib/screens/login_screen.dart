@@ -51,21 +51,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isAuthenticated', true);
 
-      // Obtener el Provider y actualizar autenticación
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       authProvider.login();
 
-      print(
-          'Estado autenticación después de login: ${authProvider.isAuthenticated}');
-
       if (mounted) {
-        context.go('/admin_widget');
+        Navigator.pushReplacementNamed(context, '/admin_widget');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Inicio de sesión exitoso')),
         );
       }
     } else {
-      //print('Error en la respuesta: ${response.body}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Credenciales no válidas')),
       );
