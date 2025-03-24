@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Expanded(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(25.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -339,7 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: MediaQuery.sizeOf(context).width > 600
+      body: MediaQuery.sizeOf(context).width > 700
           ? computerDesignLogin()
           : movileDesignLogin(),
     );
