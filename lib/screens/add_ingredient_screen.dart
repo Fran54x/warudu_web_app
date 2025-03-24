@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:warudu_web_app/colors.dart';
+import 'package:warudu_web_app/widgets/text_button_widget.dart';
 import '../constants.dart';
 
 class AddIngredientScreen extends StatefulWidget {
@@ -17,14 +18,14 @@ class AddIngredientScreen extends StatefulWidget {
 
 class _AddIngredientScreenState extends State<AddIngredientScreen> {
   final TextEditingController _nombreController = TextEditingController();
-  final TextEditingController _categoriaController = TextEditingController();
+  final TextEditingController _imagenController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.isEditing && widget.ingredient != null) {
       _nombreController.text = widget.ingredient!['nombre'];
-      _categoriaController.text = widget.ingredient!['categoria'];
+      _imagenController.text = widget.ingredient!['imagen'];
     } else {
       _clearForm();
     }
@@ -32,7 +33,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
 
   void _clearForm() {
     _nombreController.clear();
-    _categoriaController.clear();
+    _imagenController.clear();
   }
 
   Future<void> saveIngredient() async {
@@ -42,7 +43,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
     final body = jsonEncode({
       'id': widget.ingredient?['id'], // Incluimos el id si es una edición
       'nombre': _nombreController.text,
-      'categoria': _categoriaController.text,
+      'imagen': _imagenController.text,
     });
 
     try {
@@ -76,67 +77,34 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
       backgroundColor: cream,
       body: Padding(
         padding: const EdgeInsets.all(30),
-        child: Row(
-          children: [
-            // Columna izquierda
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.isEditing ? "Editar Ingrediente" : "Ingredientes",
-                        textAlign: TextAlign.start,
-                        style: GoogleFonts.inter(
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          color: green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 30),
-                  // Campos de entrada
-                  dataInput("Nombre", 25, _nombreController, singleLine: true),
-                  SizedBox(height: 10),
-                  dataInput("Categoría", 25, _categoriaController,
-                      singleLine: true),
-                  SizedBox(height: 10),
-                ],
+        child: Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.isEditing ? "Editar Ingrediente" : "Agregar Ingrediente",
+                textAlign: TextAlign.start,
+                style: GoogleFonts.inter(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: green,
+                ),
               ),
-            ),
-            SizedBox(width: 20),
-            // Columna derecha
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      saveIngredient();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: coral,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 70, vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      widget.isEditing ? 'Editar' : 'Agregar',
-                      style: GoogleFonts.inter(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: cream),
-                    ),
-                  ),
-                ],
+              SizedBox(height: 30),
+              // Campos de entrada
+              dataInput("Nombre", 25, _nombreController, singleLine: true),
+              SizedBox(height: 10),
+              dataInput("Imagen", 25, _imagenController, singleLine: true),
+              SizedBox(height: 10),
+              TextButtonWidget(
+                onAddPressed: saveIngredient,
+                wHorizontal: 70,
+                wVertical: 20,
+                fontSize: 30,
+                text: widget.isEditing ? 'Editar' : 'Agregar',
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

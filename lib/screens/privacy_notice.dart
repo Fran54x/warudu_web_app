@@ -47,6 +47,17 @@ Contacto: Si tienes alguna pregunta o inquietud sobre nuestra política de priva
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Botón para regresar
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: white, size: 30),
+                  onPressed: () {
+                    Navigator.pop(context); // Regresar a la pantalla anterior
+                  },
+                ),
+              ),
+              //Titulo
               Container(
                 alignment: Alignment.center,
                 child: Text(
