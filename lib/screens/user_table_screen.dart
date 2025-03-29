@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:warudu_web_app/components/icon_button.dart';
+import 'package:warudu_web_app/widgets/search_bar_widget.dart';
+import 'package:warudu_web_app/widgets/text_button_widget.dart';
+import 'package:warudu_web_app/widgets/title_widget.dart';
+import '../colors.dart';
+import '../components/icon_button.dart';
+import '../widgets/table_widget.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../colors.dart';
-import '../widgets/table_widget.dart';
 import '../constants.dart';
 
+const minWidth = 1000.0;
+
 class UserTableScreen extends StatefulWidget {
-  final VoidCallback onAddPressed; // Callback para agregar usuario
-  final Function(Map<String, dynamic>) onEditPressed; // Callback para editar usuario
+  final VoidCallback onAddPressed;
+  final Function(Map<String, dynamic>) onEditPressed;
 
   UserTableScreen({required this.onAddPressed, required this.onEditPressed});
 
@@ -21,40 +26,128 @@ class _UserTableScreenState extends State<UserTableScreen> {
   List<Map<String, dynamic>> users = [];
   List<Map<String, dynamic>> filteredUsers = [];
   final TextEditingController _searchController = TextEditingController();
+  int page = 1;
+  int limit = 20;
+  bool isLoading = false;
+  bool hasMore = true;
+  ScrollController _scrollController = ScrollController();
+  String currentSearchQuery = '';
 
   @override
   void initState() {
     super.initState();
     fetchUsers();
-    _searchController.addListener(_filterUsers);
+    _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_loadMore);
   }
 
-  Future<void> fetchUsers() async {
-    final url = Uri.parse('$baseUrl/usuarios');
+  void _onSearchChanged() {
+    if (_searchController.text.isEmpty) {
+      setState(() {
+        currentSearchQuery = '';
+        filteredUsers = List.from(users);
+      });
+    } else {
+      currentSearchQuery = _searchController.text.trim();
+      _filterUsers(reset: true);
+    }
+  }
+
+  Future<void> fetchUsers({bool reset = false}) async {
+    if (isLoading || !hasMore || currentSearchQuery.isNotEmpty) return;
+
+    setState(() => isLoading = true);
+    final url = Uri.parse('$baseUrl/usuarios?page=$page&limit=$limit');
 
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final newUsers =
+            (data['data'] as List).map((user) => _mapUser(user)).toList();
+
         setState(() {
-          users = data.map((user) {
-            return {
-              'id': user['id'].toString(),
-              'nombre': user['nombre'],
-              'correo': user['correo'],
-              'imagen': user['imagen'], // Asumiendo que también tienes la imagen
-              'password': user['password'],
-              'tipo_usuario': user['tipo_usuario'],
-            };
-          }).toList();
-          filteredUsers = users;
+          if (reset) {
+            users.clear();
+            filteredUsers.clear();
+            page = 1;
+          }
+
+          users.addAll(newUsers);
+          filteredUsers = List.from(users);
+          page++;
+          hasMore = newUsers.length == limit;
         });
-      } else {
-        print('Error en la petición: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error al cargar usuarios: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar usuarios')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Map<String, dynamic> _mapUser(dynamic user) {
+    return {
+      'id': user['id'].toString(),
+      'nombre': user['nombre'] ?? '',
+      'correo': user['correo'] ?? '',
+      'imagen': user['imagen'] ?? '',
+      'password': user['password'] ?? '',
+      'tipo_usuario': user['tipo_usuario'] ?? '',
+    };
+  }
+
+  Future<void> _filterUsers({bool reset = true}) async {
+    if (currentSearchQuery.isEmpty) return;
+
+    setState(() => isLoading = true);
+
+    try {
+      final url = Uri.parse(
+          '$baseUrl/usuarios?query=$currentSearchQuery&page=${reset ? 1 : page}&limit=$limit');
+
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newUsers =
+            (data['data'] as List).map((user) => _mapUser(user)).toList();
+
+        setState(() {
+          if (reset) {
+            page = 2;
+            users = newUsers;
+            filteredUsers = newUsers;
+          } else {
+            users.addAll(newUsers);
+            filteredUsers.addAll(newUsers);
+            page++;
+          }
+          hasMore = newUsers.length == limit;
+        });
+      }
+    } catch (e) {
+      print('Error en búsqueda: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al buscar usuarios')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _loadMore() {
+    if (_scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent &&
+        !isLoading &&
+        hasMore) {
+      if (currentSearchQuery.isEmpty) {
+        fetchUsers();
+      } else {
+        _filterUsers(reset: false);
+      }
     }
   }
 
@@ -67,7 +160,7 @@ class _UserTableScreenState extends State<UserTableScreen> {
       if (response.statusCode == 200) {
         setState(() {
           users.removeWhere((u) => u['id'] == user['id']);
-          filteredUsers = users;
+          filteredUsers.removeWhere((u) => u['id'] == user['id']);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Usuario eliminado exitosamente')),
@@ -80,146 +173,171 @@ class _UserTableScreenState extends State<UserTableScreen> {
     }
   }
 
-  void _filterUsers() {
-    setState(() {
-      if (_isNumeric(_searchController.text)) {
-        filteredUsers = users
-            .where((user) => user['id'].contains(_searchController.text))
-            .toList();
-      } else {
-        filteredUsers = users
-            .where((user) => user['nombre'].toLowerCase().contains(_searchController.text.toLowerCase()))
-            .toList();
-      }
-    });
+  Widget _buildTable() {
+    return ListView.builder(
+      controller: _scrollController,
+      itemCount: filteredUsers.length + 1,
+      itemBuilder: (context, index) {
+        if (index == filteredUsers.length) return _buildLoader();
+        final user = filteredUsers[index];
+        return Table(
+          border: TableBorder(
+            top: BorderSide.none,
+            left: BorderSide(color: coral, width: 3),
+            right: BorderSide(color: coral, width: 3),
+            bottom: BorderSide(color: coral, width: 3),
+            horizontalInside: BorderSide(color: coral, width: 3),
+            verticalInside: BorderSide(color: coral, width: 3),
+          ),
+          columnWidths: {
+            0: MediaQuery.sizeOf(context).width > minWidth
+                ? FixedColumnWidth(100)
+                : FlexColumnWidth(1),
+            1: FlexColumnWidth(6),
+            2: FlexColumnWidth(6),
+            3: MediaQuery.sizeOf(context).width > minWidth
+                ? FixedColumnWidth(160)
+                : FlexColumnWidth(2.5),
+          },
+          children: [
+            if (index == 0)
+              TableRow(
+                decoration: BoxDecoration(color: coral),
+                children: [
+                  tableCellHeader('ID'),
+                  tableCellHeader('Nombre'),
+                  tableCellHeader('Correo'),
+                  tableCellHeader(''),
+                ],
+              ),
+            TableRow(
+              decoration: BoxDecoration(color: cream),
+              children: [
+                tableCell(user['id']!, TextAlign.center),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: tableCell(user['nombre']!, TextAlign.start),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: tableCell(user['correo']!, TextAlign.start),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      iconButton(orange, "edit",
+                          onPressed: () => widget.onEditPressed(user)),
+                      SizedBox(width: 10),
+                      iconButton(red, "delete",
+                          onPressed: () => deleteUser(user)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
-  bool _isNumeric(String s) {
-    if (s == null) {
-      return false;
-    }
-    return double.tryParse(s) != null;
-  }
-
-  void _editUser(Map<String, dynamic> user) {
-    widget.onEditPressed(user);
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  Widget _buildLoader() {
+    return Center(
+        child: isLoading
+            ? CircularProgressIndicator(
+                color: green,
+              )
+            : Container());
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Titulo
-          Padding(
-            padding: const EdgeInsets.only(left: 5, bottom: 20),
-            child: Text(
-              "Usuarios",
-              textAlign: TextAlign.start,
-              style: GoogleFonts.inter(
-                  fontSize: 42, fontWeight: FontWeight.bold, color: green),
-            ),
-          ),
-          // Barra de búsqueda y botón de agregar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hintText: 'Buscar',
-                    prefixIcon: Icon(Icons.search, color: green),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(26),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(width: 60),
-              ElevatedButton(
-                onPressed: widget.onAddPressed, // Acción para agregar un nuevo usuario
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: coral,
-                  padding: EdgeInsets.symmetric(horizontal: 70, vertical: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: Text(
-                  'Agregar',
-                  style: GoogleFonts.inter(
-                      fontSize: 30, fontWeight: FontWeight.bold, color: cream),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-          // Tabla de usuarios con scroll
-          Expanded(
-            child: SingleChildScrollView(
-              child: Table(
-                border: TableBorder.all(color: coral, width: 3),
-                columnWidths: {
-                  0: FixedColumnWidth(100),
-                  1: FlexColumnWidth(),
-                  2: FlexColumnWidth(),
-                  3: FixedColumnWidth(140),
-                },
-                children: [
-                  // Encabezados de la tabla
-                  TableRow(
-                    decoration: BoxDecoration(color: coral),
+    return Scaffold(
+      backgroundColor: cream,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (constraints.maxWidth > 550)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      tableCellHeader('ID'),
-                      tableCellHeader('Nombre de Usuario'),
-                      tableCellHeader('Correo'),
-                      tableCellHeader(''),
+                      TitleWidget(text: "Usuarios", size: 45),
+                      SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: SearchBarWidget(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                _filterUsers();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          TextButtonWidget(
+                            onAddPressed: widget.onAddPressed,
+                            wHorizontal: 55,
+                            wVertical: 17,
+                            fontSize: 25,
+                            text: 'Agregar',
+                          ),
+                        ],
+                      )
+                    ],
+                  )
+                else
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TitleWidget(text: "Usuarios", size: 32),
+                      SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButtonWidget(
+                          onAddPressed: widget.onAddPressed,
+                          wHorizontal: 40,
+                          wVertical: 13,
+                          fontSize: 18,
+                          text: 'Agregar',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: SearchBarWidget(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            _filterUsers();
+                          },
+                        ),
+                      ),
                     ],
                   ),
-                  // Filas de la tabla filtrada
-                  for (var user in filteredUsers)
-                    TableRow(
-                      decoration: BoxDecoration(color: cream),
-                      children: [
-                        tableCell(user['id']!, TextAlign.center),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: tableCell(user['nombre']!, TextAlign.start),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: tableCell(user['correo']!, TextAlign.start),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              iconButton(orange, "edit", onPressed: () => _editUser(user)),
-                              SizedBox(width: 10),
-                              iconButton(red, "delete", onPressed: () => deleteUser(user)),
-                            ],
-                          ),
-                        ),
-                      ],
+                SizedBox(height: 20),
+                if (constraints.maxWidth > minWidth)
+                  Expanded(child: _buildTable())
+                else
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: 900,
+                        child: _buildTable(),
+                      ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

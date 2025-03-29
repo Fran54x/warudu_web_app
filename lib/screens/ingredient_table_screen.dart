@@ -13,9 +13,8 @@ import '../constants.dart';
 const minWidth = 700.0;
 
 class IngredientTableScreen extends StatefulWidget {
-  final VoidCallback onAddPressed; // Callback para agregar un nuevo ingrediente
-  final Function(Map<String, dynamic>)
-      onEditPressed; // Callback para editar un ingrediente
+  final VoidCallback onAddPressed;
+  final Function(Map<String, dynamic>) onEditPressed;
 
   IngredientTableScreen(
       {required this.onAddPressed, required this.onEditPressed});
@@ -33,25 +32,30 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
   bool isLoading = false;
   bool hasMore = true;
   ScrollController _scrollController = ScrollController();
+  String currentSearchQuery = '';
 
   @override
   void initState() {
     super.initState();
     fetchIngredients();
-    _searchController.addListener(() {
-      if (_searchController.text.isEmpty) {
-        setState(() {
-          filteredIngredients = ingredients;
-        });
-      } else {
-        _filterIngredients();
-      }
-    });
+    _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_loadMore);
   }
 
-  Future<void> fetchIngredients() async {
-    if (isLoading || !hasMore || _searchController.text.isNotEmpty) return;
+  void _onSearchChanged() {
+    if (_searchController.text.isEmpty) {
+      setState(() {
+        currentSearchQuery = '';
+        filteredIngredients = List.from(ingredients);
+      });
+    } else {
+      currentSearchQuery = _searchController.text.trim();
+      _filterIngredients(reset: true);
+    }
+  }
+
+  Future<void> fetchIngredients({bool reset = false}) async {
+    if (isLoading || !hasMore || currentSearchQuery.isNotEmpty) return;
 
     setState(() => isLoading = true);
     final url = Uri.parse('$baseUrl/ingredientes?page=$page&limit=$limit');
@@ -59,73 +63,74 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final List<dynamic> newIngredients = jsonDecode(response.body)['data'];
+        final data = jsonDecode(response.body);
+        final newIngredients = (data['data'] as List)
+            .map((ingredient) => _mapIngredient(ingredient))
+            .toList();
+
         setState(() {
-          ingredients.addAll(newIngredients.map((ingredient) => {
-                'id': ingredient['id'].toString(),
-                'nombre': ingredient['nombre'],
-                'imagen': ingredient['imagen']
-              }));
-          filteredIngredients = ingredients;
+          if (reset) {
+            ingredients.clear();
+            filteredIngredients.clear();
+            page = 1;
+          }
+
+          ingredients.addAll(newIngredients);
+          filteredIngredients = List.from(ingredients);
           page++;
-          hasMore = newIngredients.isNotEmpty;
+          hasMore = newIngredients.length == limit;
         });
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error al cargar ingredientes: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar ingredientes')),
+      );
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  void _filterIngredients({int page = 1}) async {
-    final searchText = _searchController.text.trim();
-    if (searchText.isEmpty) {
-      setState(() {
-        filteredIngredients = ingredients;
-      });
-      return;
-    }
+  Map<String, dynamic> _mapIngredient(dynamic ingredient) {
+    return {
+      'id': ingredient['id'].toString(),
+      'nombre': ingredient['nombre'] ?? '',
+      'imagen': ingredient['imagen'] ?? '',
+    };
+  }
+
+  Future<void> _filterIngredients({bool reset = true}) async {
+    if (currentSearchQuery.isEmpty) return;
 
     setState(() => isLoading = true);
 
-    final url = Uri.parse(
-      '$baseUrl/buscar_ingredientes_tabla?query=$searchText&limit=$limit&page=$page',
-    );
-
     try {
+      final url = Uri.parse(
+          '$baseUrl/ingredientes?query=$currentSearchQuery&page=${reset ? 1 : page}&limit=$limit');
+
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final List<dynamic> newIngredients = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final newIngredients =
+            (data['data'] as List).map((ing) => _mapIngredient(ing)).toList();
+
         setState(() {
-          if (page == 1) {
-            filteredIngredients = newIngredients
-                .map((ingredient) => {
-                      'id': ingredient['id'].toString(),
-                      'nombre': ingredient['nombre'] ?? '',
-                      'imagen': ingredient['imagen'] ?? '',
-                    })
-                .toList();
+          if (reset) {
+            page = 2; // Prepara para la próxima página
+            ingredients = newIngredients;
+            filteredIngredients = newIngredients;
           } else {
-            filteredIngredients.addAll(newIngredients
-                .map((ingredient) => {
-                      'id': ingredient['id'].toString(),
-                      'nombre': ingredient['nombre'] ?? '',
-                      'imagen': ingredient['imagen'] ?? '',
-                    })
-                .toList());
+            ingredients.addAll(newIngredients);
+            filteredIngredients.addAll(newIngredients);
+            page++;
           }
+          hasMore = newIngredients.length == limit;
         });
-      } else {
-        print('Error en la petición: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al buscar ingredientes')),
-        );
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error en búsqueda: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo conectar al servidor')),
+        SnackBar(content: Text('Error al buscar ingredientes')),
       );
     } finally {
       setState(() => isLoading = false);
@@ -135,12 +140,12 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
   void _loadMore() {
     if (_scrollController.position.pixels ==
             _scrollController.position.maxScrollExtent &&
-        !isLoading) {
-      if (_searchController.text.isEmpty) {
+        !isLoading &&
+        hasMore) {
+      if (currentSearchQuery.isEmpty) {
         fetchIngredients();
       } else {
-        final nextPage = (filteredIngredients.length ~/ limit) + 1;
-        _filterIngredients(page: nextPage);
+        _filterIngredients(reset: false);
       }
     }
   }
@@ -154,7 +159,7 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
       if (response.statusCode == 200) {
         setState(() {
           ingredients.removeWhere((i) => i['id'] == ingredient['id']);
-          filteredIngredients = ingredients;
+          filteredIngredients.removeWhere((i) => i['id'] == ingredient['id']);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Ingrediente eliminado exitosamente')),
@@ -264,7 +269,7 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
                             child: SearchBarWidget(
                               controller: _searchController,
                               onChanged: (value) {
-                                _filterIngredients(); // Llama a _filterIngredients cuando el texto cambie
+                                _filterIngredients();
                               },
                             ),
                           ),
@@ -288,8 +293,7 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
                       TitleWidget(text: "Ingredientes", size: 32),
                       SizedBox(height: 10),
                       SizedBox(
-                        width: double
-                            .infinity, // Asegura un tamaño consistente en pantallas pequeñas
+                        width: double.infinity,
                         child: TextButtonWidget(
                           onAddPressed: widget.onAddPressed,
                           wHorizontal: 40,
@@ -300,24 +304,19 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
                       ),
                       const SizedBox(height: 20),
                       SizedBox(
-                        width: double
-                            .infinity, // Asegura que no haya error de restricciones
+                        width: double.infinity,
                         child: SearchBarWidget(
                           controller: _searchController,
                           onChanged: (value) {
-                            _filterIngredients(); // Llama a _filterIngredients cuando el texto cambie
+                            _filterIngredients();
                           },
                         ),
                       ),
                     ],
                   ),
-
                 SizedBox(height: 20),
-
-                // Sección de tabla con scroll horizontal si el ancho es menor a minWidth
                 if (constraints.maxWidth > minWidth)
-                  Expanded(
-                      child: _buildTable()) // Sin restricciones no definidas
+                  Expanded(child: _buildTable())
                 else
                   Expanded(
                     child: SingleChildScrollView(

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:warudu_web_app/colors.dart';
+import 'package:warudu_web_app/widgets/validate_input_widget.dart';
 import '../constants.dart';
 
 class AddUserScreen extends StatefulWidget {
@@ -125,18 +126,24 @@ class _AddUserScreenState extends State<AddUserScreen> {
                     ],
                   ),
                   SizedBox(height: 30),
-                  // Campos de entrada
-                  dataInput("Nombre", 25, _nombreController, singleLine: true),
+                  ValidatedInputField(
+                    label: "Nombre del Usuario",
+                    controller: _nombreController,
+                  ),
                   SizedBox(height: 10),
-                  dataInput("Imagen", 25, _imagenController, singleLine: true),
+                  ValidatedInputField(
+                    label: "Imagen",
+                    controller: _imagenController,
+                  ),
                   SizedBox(height: 10),
-                  dataInput("Correo", 25, _correoController, singleLine: true),
+                  ValidatedInputField(
+                    label: "Correo",
+                    controller: _correoController,
+                  ),
                   SizedBox(height: 10),
-                  dataInput(
-                    "Contraseña",
-                    25,
-                    _passwordController,
-                    singleLine: true,
+                  ValidatedInputField(
+                    label: "Contraseña",
+                    controller: _passwordController,
                     isPassword: true,
                   ),
                   SizedBox(height: 10),
@@ -197,60 +204,6 @@ class _AddUserScreenState extends State<AddUserScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  // Widget personalizado para campos de entrada
-  Column dataInput(
-      String label, double borderRadius, TextEditingController controller,
-      {bool singleLine = false, bool multiLine = false, bool isPassword = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 10),
-        Text(
-          label,
-          textAlign: TextAlign.start,
-          style: GoogleFonts.inter(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: coral,
-          ),
-        ),
-        SizedBox(height: 10),
-        TextField(
-          controller: controller,
-          obscureText: isPassword && !_isPasswordVisible,
-          maxLines: multiLine ? 6 : 1,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: cream,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-              borderSide: BorderSide(color: coral, width: 4),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-              borderSide: BorderSide(color: coral, width: 4),
-            ),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(
-                      _isPasswordVisible
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: coral,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
-                  )
-                : null,
-          ),
-        ),
-      ],
     );
   }
 

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:warudu_web_app/colors.dart';
 import 'package:warudu_web_app/widgets/text_button_widget.dart';
+import 'package:warudu_web_app/widgets/validate_input_widget.dart';
 import '../constants.dart';
 
 class AddDishScreen extends StatefulWidget {
@@ -68,38 +69,39 @@ class _AddDishScreenState extends State<AddDishScreen> {
     filteredIngredients = [];
   }
 
-  Future<void> fetchIngredients({int page = 1}) async {
+  Future<void> fetchIngredients({int page = 1, String? searchQuery}) async {
     if (_isLoadingMore) return;
 
     setState(() => _isLoadingMore = true);
 
     final url = Uri.parse(
-        '$baseUrl/ingredientes_ordenados_alfabeticamente?limit=10&page=$page');
+        '$baseUrl/ingredientes_ordenados_alfabeticamente?page=$page&limit=10${searchQuery != null ? '&query=$searchQuery' : ''}');
 
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final List<dynamic> ingredientsData = data['data'];
+
         setState(() {
           if (page == 1) {
-            // Reiniciar la lista si es la primera página
-            availableIngredients = data.map((ingredient) {
+            availableIngredients = ingredientsData.map((ingredient) {
               return {
-                'id': (ingredient['id']),
+                'id': ingredient['id'],
                 'nombre': ingredient['nombre'],
               };
             }).toList();
           } else {
-            // Agregar nuevos resultados a la lista existente
-            availableIngredients.addAll(data.map((ingredient) {
+            availableIngredients.addAll(ingredientsData.map((ingredient) {
               return {
                 'id': ingredient['id'],
                 'nombre': ingredient['nombre'],
               };
             }).toList());
           }
+
           filteredIngredients = availableIngredients;
-          _hasMore = data.isNotEmpty; // Verificar si hay más resultados
+          _hasMore = data['pagination']['totalPages'] > page;
         });
       } else {
         print('Error en la petición: ${response.statusCode}');
@@ -117,7 +119,11 @@ class _AddDishScreenState extends State<AddDishScreen> {
         !_isLoadingMore &&
         _hasMore) {
       _currentPage++;
-      fetchIngredients(page: _currentPage);
+      fetchIngredients(
+          page: _currentPage,
+          searchQuery: _ingredientSearchController.text.trim().isEmpty
+              ? null
+              : _ingredientSearchController.text.trim());
     }
   }
 
@@ -219,40 +225,21 @@ class _AddDishScreenState extends State<AddDishScreen> {
     });
   }
 
-  void _filterIngredients() async {
+  void _filterIngredients() {
     final searchText = _ingredientSearchController.text.trim();
     if (searchText.isEmpty) {
       setState(() {
         filteredIngredients = availableIngredients;
       });
+      // Cargar primera página sin filtro
+      _currentPage = 1;
+      fetchIngredients(page: 1);
       return;
     }
 
-    setState(() => _isLoadingMore = true);
-
-    final url = Uri.parse(
-        '$baseUrl/buscar_ingredientes_exactos?query=$searchText&limit=10&page=1');
-
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        setState(() {
-          filteredIngredients = data.map((ingredient) {
-            return {
-              'id': ingredient['id'],
-              'nombre': ingredient['nombre'],
-            };
-          }).toList();
-        });
-      } else {
-        print('Error en la petición: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error: $e');
-    } finally {
-      setState(() => _isLoadingMore = false);
-    }
+    // Cargar resultados filtrados desde el API
+    _currentPage = 1;
+    fetchIngredients(page: 1, searchQuery: searchText);
   }
 
   @override
@@ -275,15 +262,34 @@ class _AddDishScreenState extends State<AddDishScreen> {
                 ),
               ),
               SizedBox(height: 20),
-              dataInput("Nombre", 25, _nombreController),
-              dataInput("Imagen", 25, _imagenController),
-              dataInput("Tiempo Estimado", 25, _tiempoController),
-              dataInput("Preparación", 25, _preparacionController,
-                  multiLine: true),
+              ValidatedInputField(
+                label: "Nombre del Platillo",
+                controller: _nombreController,
+              ),
+              ValidatedInputField(
+                label: "Imagen",
+                controller: _imagenController,
+              ),
+              ValidatedInputField(
+                label: "Tiempo Estimado",
+                controller: _tiempoController,
+                isNumeric: true,
+              ),
+              ValidatedInputField(
+                label: "Preparación",
+                controller: _preparacionController,
+                isMultiline: true,
+              ),
+              ValidatedInputField(
+                label: "Link de Receta",
+                controller: _linkRecetaController,
+              ),
+              ValidatedInputField(
+                label: "Tipo de Platillo",
+                controller: _tipoPlatilloController,
+              ),
               //dataInput("Valoración", 25, _valoracionController),
               //dataInput("Dificultad (1-10)", 25, _dificultadController),
-              dataInput("Link de Receta", 25, _linkRecetaController),
-              dataInput("Tipo de Platillo", 25, _tipoPlatilloController),
               SizedBox(height: 20),
               Text(
                 "Ingredientes",
@@ -372,44 +378,6 @@ class _AddDishScreenState extends State<AddDishScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  // Widget personalizado para campos de entrada
-  Column dataInput(
-      String label, double borderRadius, TextEditingController controller,
-      {bool singleLine = false, bool multiLine = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 10),
-        Text(
-          label,
-          textAlign: TextAlign.start,
-          style: GoogleFonts.inter(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: coral,
-          ),
-        ),
-        SizedBox(height: 10),
-        TextField(
-          controller: controller,
-          maxLines: multiLine ? 6 : 1,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: cream,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-              borderSide: BorderSide(color: coral, width: 4),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-              borderSide: BorderSide(color: coral, width: 4),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

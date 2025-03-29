@@ -31,25 +31,30 @@ class _DishTableScreenState extends State<DishTableScreen> {
   bool isLoading = false;
   bool hasMore = true;
   ScrollController _scrollController = ScrollController();
+  String currentSearchQuery = '';
 
   @override
   void initState() {
     super.initState();
     fetchDishes();
-    _searchController.addListener(() {
-      if (_searchController.text.isEmpty) {
-        setState(() {
-          filteredDishes = dishes;
-        });
-      } else {
-        _filterDishes();
-      }
-    });
+    _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_loadMore);
   }
 
+  void _onSearchChanged() {
+    if (_searchController.text.isEmpty) {
+      setState(() {
+        currentSearchQuery = '';
+        filteredDishes = List.from(dishes);
+      });
+    } else {
+      currentSearchQuery = _searchController.text.trim();
+      _filterDishes(reset: true);
+    }
+  }
+
   Future<void> fetchDishes() async {
-    if (isLoading || !hasMore || _searchController.text.isNotEmpty) return;
+    if (isLoading || !hasMore || currentSearchQuery.isNotEmpty) return;
 
     setState(() => isLoading = true);
     final url = Uri.parse('$baseUrl/platillos?page=$page&limit=$limit');
@@ -57,87 +62,68 @@ class _DishTableScreenState extends State<DishTableScreen> {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final List<dynamic> newDishes = jsonDecode(response.body)['data'];
+        final data = jsonDecode(response.body);
+        final newDishes =
+            (data['data'] as List).map((dish) => _mapDish(dish)).toList();
+
         setState(() {
-          dishes.addAll(newDishes.map((dish) => {
-                'id': dish['id'].toString(),
-                'nombre': dish['nombre'],
-                'imagen': dish['imagen'],
-                'descripcion': dish['descripcion'],
-                'preparacion': dish['preparacion'],
-                'tiempo': dish['tiempo'] ?? 0,
-                'ingredientes': dish['ingredientes'],
-              }));
-          filteredDishes = dishes;
+          dishes.addAll(newDishes);
+          filteredDishes = List.from(dishes);
           page++;
-          hasMore = newDishes.isNotEmpty;
+          hasMore = newDishes.length == limit;
         });
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error al cargar platillos: $e');
     } finally {
       setState(() => isLoading = false);
     }
   }
 
-  void _filterDishes({int page = 1}) async {
-    final searchText = _searchController.text.trim();
-    if (searchText.isEmpty) {
-      setState(() {
-        filteredDishes = dishes;
-      });
-      return;
-    }
+  Map<String, dynamic> _mapDish(dynamic dish) {
+    return {
+      'id': dish['id'].toString(),
+      'nombre': dish['nombre'],
+      'imagen': dish['imagen'],
+      'descripcion': dish['descripcion'],
+      'preparacion': dish['preparacion'],
+      'tiempo': dish['tiempo'] ?? 0,
+      'ingredientes': dish['ingredientes'],
+    };
+  }
+
+  Future<void> _filterDishes({bool reset = true}) async {
+    if (currentSearchQuery.isEmpty) return;
 
     setState(() => isLoading = true);
 
-    final url = Uri.parse(
-      '$baseUrl/buscar_platillos?query=$searchText&limit=$limit&page=$page',
-    );
-
     try {
+      final url = Uri.parse(
+          '$baseUrl/platillos?query=$currentSearchQuery&page=${reset ? 1 : page}&limit=$limit');
+
       final response = await http.get(url);
-      //print('Respuesta del backend: ${response.body}'); // Depuración
       if (response.statusCode == 200) {
-        final List<dynamic> newDishes = jsonDecode(response.body);
-        //print('Platillos encontrados: $newDishes'); // Depuración
+        final data = jsonDecode(response.body);
+        final newDishes =
+            (data['data'] as List).map((dish) => _mapDish(dish)).toList();
+
         setState(() {
-          if (page == 1) {
-            filteredDishes = newDishes
-                .map((dish) => {
-                      'id': dish['id'].toString(),
-                      'nombre': dish['nombre'] ?? '',
-                      'imagen': dish['imagen'] ?? '',
-                      'descripcion': dish['descripcion'] ?? '',
-                      'preparacion': dish['preparacion'] ?? '',
-                      'tiempo': dish['tiempo'] ?? 0,
-                      'ingredientes': dish['ingredientes'] ?? '',
-                    })
-                .toList();
+          if (reset) {
+            page = 2; // Prepara para la próxima página
+            dishes = newDishes;
+            filteredDishes = newDishes;
           } else {
-            filteredDishes.addAll(newDishes
-                .map((dish) => {
-                      'id': dish['id'].toString(), // Aceptar id como int
-                      'nombre': dish['nombre'] ?? '',
-                      'imagen': dish['imagen'] ?? '',
-                      'descripcion': dish['descripcion'] ?? '',
-                      'preparacion': dish['preparacion'] ?? '',
-                      'tiempo': dish['tiempo'] ?? 0,
-                      'ingredientes': dish['ingredientes'] ?? '',
-                    })
-                .toList());
+            dishes.addAll(newDishes);
+            filteredDishes.addAll(newDishes);
+            page++;
           }
+          hasMore = newDishes.length == limit;
         });
-      } else {
-        print('Error en la petición: ${response.statusCode}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al buscar platillos')),
-        );
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error en búsqueda: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo conectar al servidor')),
+        SnackBar(content: Text('Error al buscar platillos')),
       );
     } finally {
       setState(() => isLoading = false);
@@ -147,14 +133,12 @@ class _DishTableScreenState extends State<DishTableScreen> {
   void _loadMore() {
     if (_scrollController.position.pixels ==
             _scrollController.position.maxScrollExtent &&
-        !isLoading) {
-      if (_searchController.text.isEmpty) {
-        // Si no hay término de búsqueda, cargar más resultados con fetchDishes
+        !isLoading &&
+        hasMore) {
+      if (currentSearchQuery.isEmpty) {
         fetchDishes();
       } else {
-        // Si hay término de búsqueda, cargar más resultados con _filterDishes
-        final nextPage = (filteredDishes.length ~/ limit) + 1;
-        _filterDishes(page: nextPage);
+        _filterDishes(reset: false);
       }
     }
   }
@@ -168,7 +152,7 @@ class _DishTableScreenState extends State<DishTableScreen> {
       if (response.statusCode == 200) {
         setState(() {
           dishes.removeWhere((d) => d['id'] == dish['id']);
-          filteredDishes = dishes;
+          filteredDishes.removeWhere((d) => d['id'] == dish['id']);
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Platillo eliminado exitosamente')),
@@ -181,6 +165,7 @@ class _DishTableScreenState extends State<DishTableScreen> {
     }
   }
 
+  // El resto del código (build, _buildTable, etc.) permanece igual
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -205,7 +190,7 @@ class _DishTableScreenState extends State<DishTableScreen> {
                             child: SearchBarWidget(
                               controller: _searchController,
                               onChanged: (value) {
-                                _filterDishes(); // Llama a _filterDishes cuando el texto cambie
+                                _filterDishes();
                               },
                             ),
                           ),
@@ -229,8 +214,7 @@ class _DishTableScreenState extends State<DishTableScreen> {
                       TitleWidget(text: "Platillos", size: 32),
                       SizedBox(height: 10),
                       SizedBox(
-                        width: double
-                            .infinity, // Asegura un tamaño consistente en pantallas pequeñas
+                        width: double.infinity,
                         child: TextButtonWidget(
                           onAddPressed: widget.onAddPressed,
                           wHorizontal: 40,
@@ -241,24 +225,19 @@ class _DishTableScreenState extends State<DishTableScreen> {
                       ),
                       const SizedBox(height: 20),
                       SizedBox(
-                        width: double
-                            .infinity, // Asegura que no haya error de restricciones
+                        width: double.infinity,
                         child: SearchBarWidget(
                           controller: _searchController,
                           onChanged: (value) {
-                            _filterDishes(); // Llama a _filterDishes cuando el texto cambie
+                            _filterDishes();
                           },
                         ),
                       ),
                     ],
                   ),
-
                 SizedBox(height: 20),
-
-                // Sección de tabla con scroll horizontal si el ancho es menor a minWidth
                 if (constraints.maxWidth > minWidth)
-                  Expanded(
-                      child: _buildTable()) // Sin restricciones no definidas
+                  Expanded(child: _buildTable())
                 else
                   Expanded(
                     child: SingleChildScrollView(
