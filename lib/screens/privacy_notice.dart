@@ -1,6 +1,6 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:warudu_web_app/colors.dart';
 
 class PrivacyNotice extends StatefulWidget {
@@ -52,8 +52,15 @@ Contacto: Si tienes alguna pregunta o inquietud sobre nuestra política de priva
                 alignment: Alignment.centerLeft,
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: white, size: 30),
-                  onPressed: () {
-                    Navigator.pop(context); // Regresar a la pantalla anterior
+                  onPressed: () async {
+                    //Navigator.pop(context); // Regresar a la pantalla anterior
+                    final Uri url = Uri.parse('warudu.com');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    } else {
+                      // Manejo de errores si la URL no puede lanzarse
+                      print("No se pudo abrir la URL");
+                    }
                   },
                 ),
               ),
