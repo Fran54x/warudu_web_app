@@ -224,7 +224,9 @@ class _AddUserScreenState extends State<AddUserScreen> {
         fillColor: WidgetStateProperty.all(coral),
         onChanged: (int? newValue) {
           setState(() {
-            _selectedOption = newValue!;
+            if (newValue != null) {
+              _selectedOption = newValue;
+            }
           });
         },
       ),
