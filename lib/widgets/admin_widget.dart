@@ -142,8 +142,9 @@ class _AdminWidgetState extends State<AdminWidget> {
                           child: Column(
                             children: [
                               SizedBox(height: 20),
-                              Image.asset(
-                                '../assets/images/warudu_logo_crema.png',
+                              Image(
+                                image: AssetImage(
+                                    'assets/images/warudu_logo_crema.png'),
                                 width: 110,
                                 height: 110,
                               ),
