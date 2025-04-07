@@ -54,11 +54,10 @@ Contacto: Si tienes alguna pregunta o inquietud sobre nuestra política de priva
                   icon: Icon(Icons.arrow_back, color: white, size: 30),
                   onPressed: () async {
                     //Navigator.pop(context); // Regresar a la pantalla anterior
-                    final Uri url = Uri.parse('warudu.com');
+                    final Uri url = Uri.parse('https://www.warudu.com');
                     if (await canLaunchUrl(url)) {
                       await launchUrl(url);
                     } else {
-                      // Manejo de errores si la URL no puede lanzarse
                       print("No se pudo abrir la URL");
                     }
                   },
