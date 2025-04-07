@@ -177,7 +177,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
       'tiempo': _tiempoController.text,
       'preparacion': _preparacionController.text,
       'valoracion': "Fácil",
-      'dificultad': "8",
+      'dificultad': 8,
       'link_receta': _linkRecetaController.text,
       'tipo': _tipoPlatilloController.text,
       'ingredientes':
