@@ -56,7 +56,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
       'imagen': _imagenController.text,
       'correo': _correoController.text,
       'password': _passwordController.text,
-      if (_selectedOption != 0) 'tipo_usuario': _selectedOption,
+      'tipo_usuario': _selectedOption.toInt(),
     });
 
     // Validar correo electrónico
