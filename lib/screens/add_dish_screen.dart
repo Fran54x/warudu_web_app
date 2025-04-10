@@ -22,8 +22,8 @@ class _AddDishScreenState extends State<AddDishScreen> {
   final TextEditingController _imagenController = TextEditingController();
   final TextEditingController _tiempoController = TextEditingController();
   final TextEditingController _preparacionController = TextEditingController();
-  final TextEditingController _valoracionController = TextEditingController();
-  final TextEditingController _dificultadController = TextEditingController();
+  //final TextEditingController _valoracionController = TextEditingController();
+  //final TextEditingController _dificultadController = TextEditingController();
   final TextEditingController _linkRecetaController = TextEditingController();
   final TextEditingController _tipoPlatilloController = TextEditingController();
   final TextEditingController _ingredientSearchController =
@@ -60,8 +60,8 @@ class _AddDishScreenState extends State<AddDishScreen> {
     _imagenController.clear();
     _tiempoController.clear();
     _preparacionController.clear();
-    _valoracionController.clear();
-    _dificultadController.clear();
+    //_valoracionController.clear();
+    //_dificultadController.clear();
     _linkRecetaController.clear();
     _tipoPlatilloController.clear();
     _ingredientSearchController.clear();
@@ -146,8 +146,8 @@ class _AddDishScreenState extends State<AddDishScreen> {
           _imagenController.text = data['imagen'];
           _tiempoController.text = data['tiempo'].toString();
           _preparacionController.text = data['preparacion'];
-          _valoracionController.text = data['valoracion']; // string
-          _dificultadController.text = data['dificultad'].toString(); // 1 - 10
+          //_valoracionController.text = data['valoracion']; // string
+          //_dificultadController.text = data['dificultad'].toString(); // 1 - 10
           _linkRecetaController.text = data['link_receta'];
           _tipoPlatilloController.text = data['tipo'];
           selectedIngredients =
@@ -176,8 +176,8 @@ class _AddDishScreenState extends State<AddDishScreen> {
       'imagen': _imagenController.text,
       'tiempo': _tiempoController.text,
       'preparacion': _preparacionController.text,
-      'valoracion': "Fácil",
-      'dificultad': 8,
+      //'valoracion': "Fácil",
+      //'dificultad': 8,
       'link_receta': _linkRecetaController.text,
       'tipo': _tipoPlatilloController.text,
       'ingredientes':
