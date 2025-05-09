@@ -82,9 +82,7 @@ class _AddUserScreenState extends State<AddUserScreen> {
                   ? 'Usuario editado exitosamente'
                   : 'Usuario agregado exitosamente')),
         );
-        if (!widget.isEditing) {
-          _clearForm(); // Limpiar el formulario si se añadió un nuevo usuario
-        }
+        _clearForm(); // Limpiar el formulario si se añadió un nuevo usuario
       } else {
         print('Error en la petición: ${response.statusCode}');
       }
@@ -232,4 +230,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _imagenController.dispose();
+    _correoController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  } 
 }

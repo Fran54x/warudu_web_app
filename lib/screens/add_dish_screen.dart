@@ -52,6 +52,15 @@ class _AddDishScreenState extends State<AddDishScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _nombreController.dispose();
+    _imagenController.dispose();
+    _tiempoController.dispose();
+    _preparacionController.dispose();
+    //_valoracionController.dispose();
+    //_dificultadController.dispose();
+    _linkRecetaController.dispose();
+    _tipoPlatilloController.dispose();
+    _ingredientSearchController.dispose();
     super.dispose();
   }
 
@@ -198,9 +207,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
                   ? 'Platillo editado exitosamente'
                   : 'Platillo agregado exitosamente')),
         );
-        if (!widget.isEditing) {
-          _clearForm(); // Limpiar el formulario si se añadió un nuevo platillo
-        }
+        _clearForm(); // Limpiar el formulario si se añadió un nuevo platillo
       } else {
         print('Error en la petición: ${response.statusCode}');
       }

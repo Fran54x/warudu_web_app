@@ -61,9 +61,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
                   ? 'Ingrediente editado exitosamente'
                   : 'Ingrediente agregado exitosamente')),
         );
-        if (!widget.isEditing) {
-          _clearForm(); // Limpiar el formulario si se añadió un nuevo ingrediente
-        }
+         _clearForm(); // Limpiar el formulario si se añadió un nuevo ingrediente
       } else {
         print('Error en la petición: ${response.statusCode}');
       }
@@ -115,5 +113,12 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _imagenController.dispose();
+    super.dispose();
   }
 }
