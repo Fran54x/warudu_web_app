@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:warudu_web_app/screens/home_screen.dart';
 import 'package:warudu_web_app/screens/privacy_notice.dart';
 import 'package:warudu_web_app/widgets/admin_widget.dart';
@@ -8,6 +9,8 @@ import 'package:warudu_web_app/providers/auth_provider.dart'; // Importamos el A
 
 //flutter run -d chrome --web-port 8000
 void main() {
+  setUrlStrategy(PathUrlStrategy()); // para eliminar el # de la URL
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(),
@@ -21,8 +24,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: '/home',
-      //initialRoute: '/admin_widget',
+      //initialRoute: '/home',
+      initialRoute: '/admin_widget',
       routes: {
         '/login_screen': (BuildContext context) => LoginScreen(),
         '/home': (BuildContext context) => HomeScreen(),
@@ -43,13 +46,13 @@ class AuthGuard extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
-    // Si no está autenticado, lo redirige al Login
     if (!authProvider.isAuthenticated) {
-      Future.microtask(
-          () => Navigator.pushReplacementNamed(context, '/login_screen'));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login_screen');
+      });
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
+  
     return child;
   }
 }

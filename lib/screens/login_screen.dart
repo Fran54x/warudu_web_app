@@ -55,7 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
       authProvider.login();
 
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/admin_widget');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacementNamed(context, '/admin_widget',
+              arguments: {'username': username});
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Inicio de sesión exitoso')),
         );
@@ -151,43 +154,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         SizedBox(height: 20 * factor),
-        // Row(
-        //   mainAxisAlignment: MainAxisAlignment.center,
-        //   children: [
-        //     Checkbox(
-        //       value: isChecked,
-        //       onChanged: (value) {
-        //         setState(() {
-        //           isChecked = value!;
-        //         });
-        //       },
-        //       checkColor: isChecked ? coral : cream,
-        //       fillColor: WidgetStateProperty.resolveWith<Color>(
-        //           (Set<WidgetState> states) {
-        //         if (states.contains(WidgetState.selected)) {
-        //           return cream; // Cuando está activo
-        //         }
-        //         return coral; // Cuando está inactivo
-        //       }),
-        //       side: BorderSide(color: cream),
-        //     ),
-        //     Text(
-        //       'Recuérdame',
-        //       style: GoogleFonts.inter(
-        //         fontSize: 22 * factor,
-        //         fontWeight: FontWeight.w300,
-        //         color: cream,
-        //       ),
-        //     ),
-        //   ],
-        // ),
-        SizedBox(height: 20 * factor),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
             onPressed: () {
               _login();
-              //Navigator.pushReplacementNamed(context, '/admin_widget');
             },
             style: OutlinedButton.styleFrom(
               side: BorderSide(

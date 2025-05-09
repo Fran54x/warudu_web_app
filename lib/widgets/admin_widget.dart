@@ -77,10 +77,11 @@ class _AdminWidgetState extends State<AdminWidget> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
-    /*if (!authProvider.isAuthenticated) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, '/login_screen'));
+    if (authProvider.isAuthenticated == false) {
+      Future.microtask(
+          () => Navigator.pushReplacementNamed(context, '/login_screen'));
       return Scaffold(body: Center(child: CircularProgressIndicator()));
-    }*/
+    }
 
     Widget page;
     switch (selectedIndex) {
