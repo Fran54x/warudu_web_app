@@ -32,6 +32,8 @@ Derechos de los Usuarios: Tienes derecho a acceder, corregir, eliminar o restrin
 
 Cambios a esta Política de Privacidad: Nos reservamos el derecho de actualizar esta política en cualquier momento. Te notificaremos cualquier cambio mediante la publicación de la nueva política en nuestra aplicación, página web y correo electrónico.
 
+Los precios de los ingredientes son aproximados y estan sujetos a precios establecidos en base a los reportes de costes de PROFECO en zonas de Jalisco México, pueden entonces no ser exactos y variados
+
 Contacto: Si tienes alguna pregunta o inquietud sobre nuestra política de privacidad, no dudes en contactarnos en warudu29@gmail.com.
   """;
 
