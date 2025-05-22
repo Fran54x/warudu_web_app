@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:warudu_web_app/colors.dart';
+import 'package:warudu_web_app/widgets/text_button_widget.dart';
+import 'package:warudu_web_app/widgets/validate_input_widget.dart';
 import '../constants.dart';
 
 class AddDishScreen extends StatefulWidget {
@@ -20,11 +22,19 @@ class _AddDishScreenState extends State<AddDishScreen> {
   final TextEditingController _imagenController = TextEditingController();
   final TextEditingController _tiempoController = TextEditingController();
   final TextEditingController _preparacionController = TextEditingController();
+  //final TextEditingController _valoracionController = TextEditingController();
+  //final TextEditingController _dificultadController = TextEditingController();
+  final TextEditingController _linkRecetaController = TextEditingController();
+  final TextEditingController _tipoPlatilloController = TextEditingController();
   final TextEditingController _ingredientSearchController =
       TextEditingController();
   List<Map<String, dynamic>> availableIngredients = [];
   List<Map<String, dynamic>> selectedIngredients = [];
   List<Map<String, dynamic>> filteredIngredients = [];
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
 
   @override
   void initState() {
@@ -36,6 +46,22 @@ class _AddDishScreenState extends State<AddDishScreen> {
     }
     fetchIngredients();
     _ingredientSearchController.addListener(_filterIngredients);
+    _scrollController.addListener(_loadMore); // Agregar el listener
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _nombreController.dispose();
+    _imagenController.dispose();
+    _tiempoController.dispose();
+    _preparacionController.dispose();
+    //_valoracionController.dispose();
+    //_dificultadController.dispose();
+    _linkRecetaController.dispose();
+    _tipoPlatilloController.dispose();
+    _ingredientSearchController.dispose();
+    super.dispose();
   }
 
   void _clearForm() {
@@ -43,32 +69,79 @@ class _AddDishScreenState extends State<AddDishScreen> {
     _imagenController.clear();
     _tiempoController.clear();
     _preparacionController.clear();
+    //_valoracionController.clear();
+    //_dificultadController.clear();
+    _linkRecetaController.clear();
+    _tipoPlatilloController.clear();
     _ingredientSearchController.clear();
     selectedIngredients.clear();
     filteredIngredients = [];
   }
 
-  Future<void> fetchIngredients() async {
-    final url = Uri.parse('$baseUrl/ingredientes');
+  Future<void> fetchIngredients({int page = 1, String? searchQuery}) async {
+    if (_isLoadingMore) return;
+
+    setState(() => _isLoadingMore = true);
+
+    final url = Uri.parse(
+        '$baseUrl/ingredientes_ordenados_alfabeticamente?page=$page&limit=10${searchQuery != null ? '&query=$searchQuery' : ''}');
+
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final List<dynamic> ingredientsData = data['data'];
+
         setState(() {
-          availableIngredients = data.map((ingredient) {
-            return {
-              'id': ingredient['id'],
-              'nombre': ingredient['nombre'],
-            };
-          }).toList();
+          if (page == 1) {
+            availableIngredients = ingredientsData.map((ingredient) {
+              return {
+                'id': ingredient['id'],
+                'nombre': ingredient['nombre'],
+              };
+            }).toList();
+          } else {
+            availableIngredients.addAll(ingredientsData.map((ingredient) {
+              return {
+                'id': ingredient['id'],
+                'nombre': ingredient['nombre'],
+              };
+            }).toList());
+          }
+
           filteredIngredients = availableIngredients;
+          _hasMore = data['pagination']['totalPages'] > page;
         });
       } else {
         print('Error en la petición: ${response.statusCode}');
       }
     } catch (e) {
       print('Error: $e');
+    } finally {
+      setState(() => _isLoadingMore = false);
     }
+  }
+
+  void _loadMore() {
+    if (_scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent &&
+        !_isLoadingMore &&
+        _hasMore) {
+      _currentPage++;
+      fetchIngredients(
+          page: _currentPage,
+          searchQuery: _ingredientSearchController.text.trim().isEmpty
+              ? null
+              : _ingredientSearchController.text.trim());
+    }
+  }
+
+  Widget _buildLoader() {
+    return Center(
+      child: _isLoadingMore
+          ? CircularProgressIndicator(color: green)
+          : Container(),
+    );
   }
 
   Future<void> fetchDishDetails(int platilloId) async {
@@ -82,6 +155,10 @@ class _AddDishScreenState extends State<AddDishScreen> {
           _imagenController.text = data['imagen'];
           _tiempoController.text = data['tiempo'].toString();
           _preparacionController.text = data['preparacion'];
+          //_valoracionController.text = data['valoracion']; // string
+          //_dificultadController.text = data['dificultad'].toString(); // 1 - 10
+          _linkRecetaController.text = data['link_receta'];
+          _tipoPlatilloController.text = data['tipo'];
           selectedIngredients =
               List<Map<String, dynamic>>.from(data['ingredientes']);
           selectedIngredients.forEach((selectedIngredient) {
@@ -107,9 +184,13 @@ class _AddDishScreenState extends State<AddDishScreen> {
       'nombre': _nombreController.text,
       'imagen': _imagenController.text,
       'tiempo': _tiempoController.text,
+      'preparacion': _preparacionController.text,
+      //'valoracion': "Fácil",
+      //'dificultad': 8,
+      'link_receta': _linkRecetaController.text,
+      'tipo': _tipoPlatilloController.text,
       'ingredientes':
           selectedIngredients.map((ingredient) => ingredient['id']).toList(),
-      'preparacion': _preparacionController.text,
     });
 
     try {
@@ -126,9 +207,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
                   ? 'Platillo editado exitosamente'
                   : 'Platillo agregado exitosamente')),
         );
-        if (!widget.isEditing) {
-          _clearForm(); // Limpiar el formulario si se añadió un nuevo platillo
-        }
+        _clearForm(); // Limpiar el formulario si se añadió un nuevo platillo
       } else {
         print('Error en la petición: ${response.statusCode}');
       }
@@ -142,7 +221,6 @@ class _AddDishScreenState extends State<AddDishScreen> {
       selectedIngredients.add(ingredient);
       availableIngredients.removeWhere((i) => i['id'] == ingredient['id']);
       _filterIngredients(); // Actualizar lista filtrada
-      _ingredientSearchController.clear();
     });
   }
 
@@ -155,12 +233,20 @@ class _AddDishScreenState extends State<AddDishScreen> {
   }
 
   void _filterIngredients() {
-    setState(() {
-      final query = _ingredientSearchController.text.toLowerCase();
-      filteredIngredients = availableIngredients.where((ingredient) {
-        return ingredient['nombre'].toLowerCase().contains(query);
-      }).toList();
-    });
+    final searchText = _ingredientSearchController.text.trim();
+    if (searchText.isEmpty) {
+      setState(() {
+        filteredIngredients = availableIngredients;
+      });
+      // Cargar primera página sin filtro
+      _currentPage = 1;
+      fetchIngredients(page: 1);
+      return;
+    }
+
+    // Cargar resultados filtrados desde el API
+    _currentPage = 1;
+    fetchIngredients(page: 1, searchQuery: searchText);
   }
 
   @override
@@ -169,171 +255,136 @@ class _AddDishScreenState extends State<AddDishScreen> {
       backgroundColor: cream,
       body: Padding(
         padding: const EdgeInsets.all(30),
-        child: Row(
-          children: [
-            // Columna izquierda
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.isEditing ? "Editar Platillo" : "Platillos",
-                        textAlign: TextAlign.start,
-                        style: GoogleFonts.inter(
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          color: green,
+        child: SingleChildScrollView(
+          physics: ClampingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.isEditing ? "Editar Platillo" : "Agregar Platillo",
+                style: GoogleFonts.inter(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: green,
+                ),
+              ),
+              SizedBox(height: 20),
+              ValidatedInputField(
+                label: "Nombre del Platillo",
+                controller: _nombreController,
+              ),
+              ValidatedInputField(
+                label: "Imagen",
+                controller: _imagenController,
+              ),
+              ValidatedInputField(
+                label: "Tiempo Estimado",
+                controller: _tiempoController,
+                isNumeric: true,
+              ),
+              ValidatedInputField(
+                label: "Preparación",
+                controller: _preparacionController,
+                isMultiline: true,
+              ),
+              ValidatedInputField(
+                label: "Link de Receta",
+                controller: _linkRecetaController,
+              ),
+              ValidatedInputField(
+                label: "Tipo de Platillo",
+                controller: _tipoPlatilloController,
+              ),
+              //dataInput("Valoración", 25, _valoracionController),
+              //dataInput("Dificultad (1-10)", 25, _dificultadController),
+              SizedBox(height: 20),
+              Text(
+                "Ingredientes",
+                style: GoogleFonts.inter(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: coral,
+                ),
+              ),
+              SizedBox(height: 10),
+              SizedBox(
+                height: 250, // Altura fija para que no colapse
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: ClampingScrollPhysics(),
+                    itemCount: selectedIngredients.length,
+                    itemBuilder: (context, index) {
+                      final ingredient = selectedIngredients[index];
+                      return ListTile(
+                        title: Text(ingredient['nombre']),
+                        trailing: IconButton(
+                          icon: Icon(Icons.remove_circle, color: red),
+                          onPressed: () {
+                            _removeIngredient(
+                                ingredient); // Eliminar el ingrediente
+                          },
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 30),
-                  // Campos de entrada
-                  dataInput("Nombre", 25, _nombreController, singleLine: true),
-                  SizedBox(height: 10),
-                  dataInput("Imagen", 25, _imagenController, singleLine: true),
-                  SizedBox(height: 10),
-                  dataInput("Tiempo Estimado", 25, _tiempoController,
-                      singleLine: true),
-                  SizedBox(height: 10),
-                  dataInput("Preparación", 25, _preparacionController,
-                      multiLine: true),
-                ],
-              ),
-            ),
-            SizedBox(width: 20),
-            // Columna derecha
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Lista de ingredientes
-                  Text(
-                    "Ingredientes",
-                    style: GoogleFonts.inter(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: coral,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: selectedIngredients.length,
-                      itemBuilder: (context, index) {
-                        final ingredient = selectedIngredients[index];
-                        return ListTile(
-                          title: Text(ingredient['nombre']),
-                          trailing: IconButton(
-                            icon: Icon(Icons.remove_circle, color: red),
-                            onPressed: () {
-                              _removeIngredient(ingredient);
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: _ingredientSearchController,
-                    decoration: InputDecoration(
-                      hintText: 'Buscar Ingrediente',
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.search, color: coral),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(26),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filteredIngredients.length,
-                      itemBuilder: (context, index) {
-                        final ingredient = filteredIngredients[index];
-                        return ListTile(
-                          title: Text(ingredient['nombre']),
-                          trailing: IconButton(
-                            icon: Icon(Icons.add_circle, color: green),
-                            onPressed: () {
-                              _addIngredient(ingredient);
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      saveDish();
+                      );
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: coral,
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 70, vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      widget.isEditing ? 'Editar' : 'Agregar',
-                      style: GoogleFonts.inter(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                          color: cream),
-                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ],
+              SizedBox(height: 10),
+              TextField(
+                controller: _ingredientSearchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar Ingrediente',
+                  filled: true,
+                  fillColor: Colors.white,
+                  prefixIcon: Icon(Icons.search, color: coral),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(26),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              SizedBox(
+                height: 250,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    shrinkWrap: true,
+                    physics: ClampingScrollPhysics(),
+                    itemCount: filteredIngredients.length + (_hasMore ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == filteredIngredients.length) {
+                        return _buildLoader(); // Mostrar indicador de carga
+                      }
+                      final ingredient = filteredIngredients[index];
+                      return ListTile(
+                        title: Text(ingredient['nombre']),
+                        trailing: IconButton(
+                          icon: Icon(Icons.add_circle, color: green),
+                          onPressed: () {
+                            _addIngredient(ingredient); // Añadir el ingrediente
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 10),
+              TextButtonWidget(
+                onAddPressed: saveDish,
+                wHorizontal: 70,
+                wVertical: 20,
+                fontSize: 30,
+                text: widget.isEditing ? 'Editar' : 'Agregar',
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  // Widget personalizado para campos de entrada
-  Column dataInput(
-      String label, double borderRadius, TextEditingController controller,
-      {bool singleLine = false, bool multiLine = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 10),
-        Text(
-          label,
-          textAlign: TextAlign.start,
-          style: GoogleFonts.inter(
-            fontSize: 26,
-            fontWeight: FontWeight.bold,
-            color: coral,
-          ),
-        ),
-        SizedBox(height: 10),
-        TextField(
-          controller: controller,
-          maxLines: multiLine ? 6 : 1,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: cream,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-              borderSide: BorderSide(color: coral, width: 4),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(borderRadius),
-              borderSide: BorderSide(color: coral, width: 4),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

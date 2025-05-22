@@ -16,6 +16,8 @@ const List<Map<String, dynamic>> entries = [
   {'texto': 'Usuarios', 'icono': Icons.people},
 ];
 
+double minWidth = 1100;
+
 class AdminWidget extends StatefulWidget {
   final Map<String, dynamic>? userToEdit;
   final Map<String, dynamic>? ingredientToEdit;
@@ -64,16 +66,20 @@ class _AdminWidgetState extends State<AdminWidget> {
     });
   }
 
-  void _editDish(Map<String, dynamic> dish) => changeScreen(3, dishToEdit: dish);
-  void _editIngredient(Map<String, dynamic> ingredient) => changeScreen(4, ingredientToEdit: ingredient);
-  void _editUser(Map<String, dynamic> user) => changeScreen(5, userToEdit: user);
+  void _editDish(Map<String, dynamic> dish) =>
+      changeScreen(3, dishToEdit: dish);
+  void _editIngredient(Map<String, dynamic> ingredient) =>
+      changeScreen(4, ingredientToEdit: ingredient);
+  void _editUser(Map<String, dynamic> user) =>
+      changeScreen(5, userToEdit: user);
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
-    if (!authProvider.isAuthenticated) {
-      Future.microtask(() => Navigator.pushReplacementNamed(context, '/login_screen'));
+    if (authProvider.isAuthenticated == false) {
+      Future.microtask(
+          () => Navigator.pushReplacementNamed(context, '/login_screen'));
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -128,21 +134,21 @@ class _AdminWidgetState extends State<AdminWidget> {
               SafeArea(
                 child: Container(
                   color: green,
-                  width: constraints.maxWidth >= 1000 ? 250 : 72,
+                  width: constraints.maxWidth >= minWidth ? 250 : 72,
                   child: Column(
                     children: [
-                      if (constraints.maxWidth >= 1000)
+                      if (constraints.maxWidth >= minWidth)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 20.0),
                           child: Column(
                             children: [
-                              const SizedBox(height: 20),
+                              SizedBox(height: 20),
                               Image.asset(
-                                '../assets/images/warudu_logo_crema.png',
+                                'assets/images/warudu_logo_crema.png',
                                 width: 110,
                                 height: 110,
                               ),
-                              const SizedBox(height: 10),
+                              SizedBox(height: 10),
                               Text(
                                 'Warudu',
                                 style: GoogleFonts.inter(
@@ -152,7 +158,8 @@ class _AdminWidgetState extends State<AdminWidget> {
                                 ),
                               ),
                               Container(
-                                margin: const EdgeInsets.symmetric(vertical: 10.0),
+                                margin:
+                                    const EdgeInsets.symmetric(vertical: 10.0),
                                 height: 6,
                                 width: 180,
                                 color: coral,
@@ -162,7 +169,7 @@ class _AdminWidgetState extends State<AdminWidget> {
                         ),
                       Expanded(
                         child: NavigationRail(
-                          extended: constraints.maxWidth >= 1000,
+                          extended: constraints.maxWidth >= minWidth,
                           backgroundColor: green,
                           indicatorColor: coral,
                           destinations: [
@@ -179,29 +186,40 @@ class _AdminWidgetState extends State<AdminWidget> {
                                 ),
                               ),
                           ],
-                          selectedIndex: selectedIndex < 3 ? selectedIndex : lastMainSelectedIndex,
+                          selectedIndex: selectedIndex < 3
+                              ? selectedIndex
+                              : lastMainSelectedIndex,
                           onDestinationSelected: (value) {
                             changeScreen(value);
                           },
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      SizedBox(height: 10),
                       // Botón de cerrar sesión
                       TextButton.icon(
                         onPressed: () {
                           authProvider.logout();
-                          Navigator.pushReplacementNamed(context, '/login_screen');
+                          Navigator.pushReplacementNamed(
+                              context, '/login_screen');
                         },
-                        icon: Icon(Icons.logout, color: cream),
+                        icon: Center(
+                          child: Icon(Icons.logout,
+                              color: (constraints.maxWidth >= minWidth)
+                                  ? cream
+                                  : Colors.white),
+                        ),
                         label: Text(
-                          'Cerrar sesión',
+                          (constraints.maxWidth >= minWidth)
+                              ? 'Cerrar sesión'
+                              : '',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             color: cream,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20),
                     ],
                   ),
                 ),

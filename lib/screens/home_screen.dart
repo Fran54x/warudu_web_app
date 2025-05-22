@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:warudu_web_app/screens/privacy_notice.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../colors.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -12,8 +13,52 @@ class HomeScreen extends StatelessWidget {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double appBarHeight = 80.0;
     final double bottomBarHeight = 50.0;
-    final double availableHeight =
-        screenHeight - appBarHeight - bottomBarHeight;
+    final double availableHeight = screenHeight - appBarHeight;
+
+    final GlobalKey section2Key = GlobalKey();
+    final GlobalKey section3Key = GlobalKey();
+    final GlobalKey section4Key = GlobalKey();
+
+    // Función para hacer scroll a la posición deseada
+    void scrollToSection(GlobalKey key) {
+      Scrollable.ensureVisible(
+        key.currentContext!,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+
+    // Función para abrir la URL en el navegador
+    Future<void> _launchURL(String url) async {
+      final Uri uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        throw 'No se pudo abrir la URL: $url';
+      }
+    }
+
+    // Widget para hacer el botón clickeable
+    Widget _buildSocialButton(String assetPath, String url, imageWidth) {
+      return MouseRegion(
+        // Cambia el cursor al pasar por encima
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => _launchURL(url),
+          child: Image.asset(assetPath, width: imageWidth),
+        ),
+      );
+    }
+
+    Widget NameTeamWidget(String text, dynamic size) {
+      return Text(
+        text,
+        style: TextStyle(
+          fontSize: size,
+          fontWeight: FontWeight.w500,
+          color: white,
+        ),
+        textAlign: TextAlign.center,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -43,7 +88,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           if (MediaQuery.of(context).size.width > 600) ...[
             TextButton(
-              onPressed: () {},
+              onPressed: () => scrollToSection(section2Key),
               child: Text(
                 'Inicio',
                 style: GoogleFonts.inter(
@@ -55,7 +100,7 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(width: 10),
             TextButton(
-              onPressed: () {},
+              onPressed: () => scrollToSection(section3Key),
               child: Text(
                 'Aplicación',
                 style: GoogleFonts.inter(
@@ -67,7 +112,7 @@ class HomeScreen extends StatelessWidget {
             ),
             SizedBox(width: 10),
             TextButton(
-              onPressed: () {},
+              onPressed: () => scrollToSection(section4Key),
               child: Text(
                 'Nosotros',
                 style: GoogleFonts.inter(
@@ -85,13 +130,13 @@ class HomeScreen extends StatelessWidget {
                 // Navegar según la opción seleccionada
                 switch (value) {
                   case 'Inicio':
-                    // Acción para Inicio
+                    scrollToSection(section2Key);
                     break;
                   case 'Aplicación':
-                    // Acción para Aplicación
+                    scrollToSection(section3Key);
                     break;
                   case 'Nosotros':
-                    // Acción para Nosotros
+                    scrollToSection(section4Key);
                     break;
                 }
               },
@@ -115,15 +160,15 @@ class HomeScreen extends StatelessWidget {
             // Primera sección (Portada)
             Container(
               color: green,
-              //height: availableHeight,
               width: double.infinity,
               child: Stack(
                 children: [
-                  FadeInImage.memoryNetwork(
+                  FadeInImage(
                     fadeInDuration: const Duration(seconds: 2),
-                    placeholder: kTransparentImage,
+                    placeholder:
+                        AssetImage('assets/images/transparent_image.png'),
                     fit: BoxFit.cover,
-                    image: 'assets/images/pozole.jpg',
+                    image: AssetImage('assets/images/pozole.jpg'),
                     width: double.infinity,
                     height: availableHeight,
                   ),
@@ -151,6 +196,7 @@ class HomeScreen extends StatelessWidget {
             ),
             // Segunda sección (¿Qué es Warudu?)
             Container(
+              key: section2Key,
               padding: EdgeInsets.all(60),
               color: cream,
               child: DottedBorder(
@@ -183,11 +229,12 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 child: ClipRRect(
                                   // Radio de las esquinas redondeadas
-                                  child: FadeInImage.memoryNetwork(
+                                  child: FadeInImage(
                                     fadeInDuration: const Duration(seconds: 2),
-                                    placeholder: kTransparentImage,
+                                    placeholder: AssetImage(
+                                        'assets/images/transparent_image.png'),
                                     fit: BoxFit.cover,
-                                    image: 'assets/images/mole.jpg',
+                                    image: AssetImage('assets/images/mole.jpg'),
                                     width: screenWidth * 0.4,
                                   ),
                                 ),
@@ -246,11 +293,12 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 child: ClipRRect(
                                   // Radio de las esquinas redondeadas
-                                  child: FadeInImage.memoryNetwork(
+                                  child: FadeInImage(
                                     fadeInDuration: const Duration(seconds: 2),
-                                    placeholder: kTransparentImage,
+                                    placeholder: AssetImage(
+                                        'assets/images/transparent_image.png'),
                                     fit: BoxFit.cover,
-                                    image: 'assets/images/mole.jpg',
+                                    image: AssetImage('assets/images/mole.jpg'),
                                     width: screenWidth * 0.4,
                                   ),
                                 ),
@@ -294,6 +342,7 @@ class HomeScreen extends StatelessWidget {
 
             // Tercera sección (Aplicación)
             Container(
+              key: section3Key,
               height: MediaQuery.of(context).size.width > 600
                   ? availableHeight // Usar availableHeight en pantallas grandes
                   : null, // Ignorar availableHeight en móviles
@@ -342,7 +391,7 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 20),
                                 Image.asset(
-                                  'assets/images/google_play_button.jpg',
+                                  'assets/images/google_play_button.png',
                                   width: constraints.maxWidth * 0.2,
                                 ),
                               ],
@@ -394,7 +443,7 @@ class HomeScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 20),
                               Image.asset(
-                                'assets/images/google_play_button.jpg',
+                                'assets/images/google_play_button.png',
                                 width: constraints.maxWidth * 0.3,
                               ),
                             ],
@@ -409,6 +458,7 @@ class HomeScreen extends StatelessWidget {
 
             // Cuarta sección (Nosotros)
             Container(
+              key: section4Key,
               padding: EdgeInsets.all(60),
               color: cream,
               child: Container(
@@ -458,21 +508,20 @@ class HomeScreen extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment
                                       .center, // Centrando los iconos
                                   children: [
-                                    Image(
-                                        image: AssetImage(
-                                            'assets/images/facebook.png'),
-                                        width: 50),
-                                    SizedBox(width: 25),
-                                    Image(
-                                        image: AssetImage(
-                                            'assets/images/twitter.png'),
-                                        width: 50),
-                                    SizedBox(width: 25),
-                                    Image(
-                                      image: AssetImage(
-                                          'assets/images/instagram.png'),
-                                      width: 50,
-                                    )
+                                    //_buildSocialButton(
+                                    //    'assets/images/facebook.png',
+                                    //    'https://www.facebook.com',
+                                    //    60),
+                                    SizedBox(width: 20),
+                                    _buildSocialButton(
+                                        'assets/images/tik-tok.png',
+                                        'https://www.tiktok.com/@warudu8?_t=ZM-8tMxrfO6eta&_r=1',
+                                        60),
+                                    SizedBox(width: 20),
+                                    _buildSocialButton(
+                                        'assets/images/instagram.png',
+                                        'https://www.instagram.com/warudu29/',
+                                        60),
                                   ],
                                 ),
                               ],
@@ -491,11 +540,13 @@ class HomeScreen extends StatelessWidget {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: FadeInImage.memoryNetwork(
+                                child: FadeInImage(
                                   fadeInDuration: const Duration(seconds: 2),
-                                  placeholder: kTransparentImage,
+                                  placeholder: AssetImage(
+                                      'assets/images/transparent_image.png'),
                                   fit: BoxFit.cover,
-                                  image: 'assets/images/enchiladas.jfif',
+                                  image: AssetImage(
+                                      'assets/images/enchiladas.jfif'),
                                   width: constraints.maxWidth * 0.4,
                                 ),
                               ),
@@ -523,11 +574,13 @@ class HomeScreen extends StatelessWidget {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: FadeInImage.memoryNetwork(
+                                child: FadeInImage(
                                   fadeInDuration: const Duration(seconds: 2),
-                                  placeholder: kTransparentImage,
+                                  placeholder: AssetImage(
+                                      'assets/images/transparent_image.png'),
                                   fit: BoxFit.cover,
-                                  image: 'assets/images/enchiladas.jfif',
+                                  image: AssetImage(
+                                      'assets/images/enchiladas.jfif'),
                                   width: constraints.maxWidth * 0.45,
                                 ),
                               ),
@@ -559,21 +612,16 @@ class HomeScreen extends StatelessWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image(
-                                      image: AssetImage(
-                                          'assets/images/facebook.png'),
-                                      width: 30),
-                                  SizedBox(width: 10),
-                                  Image(
-                                      image: AssetImage(
-                                          'assets/images/twitter.png'),
-                                      width: 30),
-                                  SizedBox(width: 10),
-                                  Image(
-                                    image: AssetImage(
-                                        'assets/images/instagram.png'),
-                                    width: 30,
-                                  )
+                                  SizedBox(width: 20),
+                                  _buildSocialButton(
+                                      'assets/images/tik-tok.png',
+                                      'https://www.tiktok.com/@warudu8?_t=ZM-8tMxrfO6eta&_r=1',
+                                      30),
+                                  SizedBox(width: 20),
+                                  _buildSocialButton(
+                                      'assets/images/instagram.png',
+                                      'https://www.instagram.com/warudu29/',
+                                      30),
                                 ],
                               ),
                             ],
@@ -588,15 +636,74 @@ class HomeScreen extends StatelessWidget {
 
             // Quinta sección (Pie de página)
             Container(
+              color: Color.fromARGB(255, 7, 82, 2),
+              child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: LayoutBuilder(builder: (context, constraints) {
+                    if (constraints.maxWidth > 600) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          NameTeamWidget(
+                              "Erick Noel Robles Luna     Hector Mauricio Rodriguez Salazar     Luis Daniel Alejandro Saavedra Ortega     Luis Francisco Rios Torres",
+                              19)
+                        ],
+                      );
+                    } else {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                NameTeamWidget("Erick Noel Robles Luna", 16),
+                                NameTeamWidget(
+                                    "Hector Mauricio Rodriguez Salazar", 16),
+                                NameTeamWidget(
+                                    "Luis Daniel Alejandro Saavedra Ortega",
+                                    16),
+                                NameTeamWidget(
+                                    "Luis Francisco Rios Torres", 16),
+                              ],
+                            ),
+                          )
+                        ],
+                      );
+                    }
+                  })),
+            ),
+            Container(
               padding: EdgeInsets.all(20),
               color: green,
               child: Column(
                 children: [
-                  Text(
-                    "Pie de Página",
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      color: green,
+                  Material(
+                    color: Colors
+                        .transparent, // Necesario para que `InkWell` funcione bien
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => PrivacyNotice()),
+                        );
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.all(
+                            8.0), // Para que el área táctil sea mayor
+                        child: Text(
+                          "Aviso de Privacidad",
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            color: Colors
+                                .white, // Color visible sobre el fondo verde
+                            decoration:
+                                TextDecoration.underline, // Simula un enlace
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
