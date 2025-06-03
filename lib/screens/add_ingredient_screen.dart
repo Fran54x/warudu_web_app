@@ -20,6 +20,7 @@ class AddIngredientScreen extends StatefulWidget {
 class _AddIngredientScreenState extends State<AddIngredientScreen> {
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _imagenController = TextEditingController();
+  final TextEditingController _precioController = TextEditingController();
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
     if (widget.isEditing && widget.ingredient != null) {
       _nombreController.text = widget.ingredient!['nombre'];
       _imagenController.text = widget.ingredient!['imagen'];
+      _precioController.text = widget.ingredient!['costo_estimado'].toString();
     } else {
       _clearForm();
     }
@@ -35,6 +37,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
   void _clearForm() {
     _nombreController.clear();
     _imagenController.clear();
+    _precioController.clear();
   }
 
   Future<void> saveIngredient() async {
@@ -45,6 +48,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
       'id': widget.ingredient?['id'], // Incluimos el id si es una edición
       'nombre': _nombreController.text,
       'imagen': _imagenController.text,
+      'costo_estimado': double.tryParse(_precioController.text) ?? 0.0,
     });
 
     try {
@@ -61,8 +65,14 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
                   ? 'Ingrediente editado exitosamente'
                   : 'Ingrediente agregado exitosamente')),
         );
-         _clearForm(); // Limpiar el formulario si se añadió un nuevo ingrediente
+        _clearForm(); // Limpiar el formulario si se añadió un nuevo ingrediente
       } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(widget.isEditing
+                  ? 'Error al editar el ingrediente'
+                  : 'Error al agregar el ingrediente')),
+        );
         print('Error en la petición: ${response.statusCode}');
       }
     } catch (e) {
@@ -76,40 +86,43 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
       backgroundColor: cream,
       body: Padding(
         padding: const EdgeInsets.all(30),
-        child: Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.isEditing ? "Editar Ingrediente" : "Agregar Ingrediente",
-                textAlign: TextAlign.start,
-                style: GoogleFonts.inter(
-                  fontSize: 42,
-                  fontWeight: FontWeight.bold,
-                  color: green,
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.isEditing ? "Editar Ingrediente" : "Agregar Ingrediente",
+              textAlign: TextAlign.start,
+              style: GoogleFonts.inter(
+                fontSize: 42,
+                fontWeight: FontWeight.bold,
+                color: green,
               ),
-              SizedBox(height: 30),
-              // Campos de entrada
-              ValidatedInputField(
-                label: "Nombre del Ingrediente",
-                controller: _nombreController,
-              ),
-              SizedBox(height: 10),
-              ValidatedInputField(
-                label: "Imagen",
-                controller: _imagenController,
-              ),
-              SizedBox(height: 10),
-              TextButtonWidget(
-                onAddPressed: saveIngredient,
-                wHorizontal: 70,
-                wVertical: 20,
-                fontSize: 30,
-                text: widget.isEditing ? 'Editar' : 'Agregar',
-              ),
-            ],
-          ),
+            ),
+            SizedBox(height: 30),
+            // Campos de entrada
+            ValidatedInputField(
+              label: "Nombre del Ingrediente",
+              controller: _nombreController,
+            ),
+            SizedBox(height: 10),
+            ValidatedInputField(
+              label: "Imagen",
+              controller: _imagenController,
+            ),
+            SizedBox(height: 10),
+            ValidatedInputField(
+              label: "Precio",
+              controller: _precioController,
+            ),
+            SizedBox(height: 10),
+            TextButtonWidget(
+              onAddPressed: saveIngredient,
+              wHorizontal: 70,
+              wVertical: 20,
+              fontSize: 30,
+              text: widget.isEditing ? 'Editar' : 'Agregar',
+            ),
+          ],
         ),
       ),
     );
@@ -119,6 +132,7 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
   void dispose() {
     _nombreController.dispose();
     _imagenController.dispose();
+    _precioController.dispose();
     super.dispose();
   }
 }

@@ -96,6 +96,7 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
       'id': ingredient['id'].toString(),
       'nombre': ingredient['nombre'] ?? '',
       'imagen': ingredient['imagen'] ?? '',
+      'costo_estimado': ingredient['costo_estimado']?.toString() ?? '0.0',
     };
   }
 

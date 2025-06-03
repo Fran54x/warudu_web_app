@@ -386,13 +386,17 @@ class HomeScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 SvgPicture.asset(
-                                  'assets/images/qr_code.svg',
+                                  'assets/images/warudu_qr.svg',
                                   width: constraints.maxWidth * 0.25,
                                 ),
                                 SizedBox(height: 20),
-                                Image.asset(
-                                  'assets/images/google_play_button.png',
-                                  width: constraints.maxWidth * 0.2,
+                                GestureDetector(
+                                  onTap: () => _launchURL(
+                                      'https://play.google.com/store/apps/details?id=com.warudu.warudu'),
+                                  child: Image.asset(
+                                    'assets/images/google_play_button.png',
+                                    width: constraints.maxWidth * 0.2,
+                                  ),
                                 ),
                               ],
                             ),
@@ -438,13 +442,17 @@ class HomeScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SvgPicture.asset(
-                                'assets/images/qr_code.svg',
+                                'assets/images/warudu_qr.svg',
                                 height: constraints.maxWidth * 0.3,
                               ),
                               SizedBox(height: 20),
-                              Image.asset(
-                                'assets/images/google_play_button.png',
-                                width: constraints.maxWidth * 0.3,
+                              GestureDetector(
+                                onTap: () => _launchURL(
+                                    'https://play.google.com/store/apps/details?id=com.warudu.warudu'),
+                                child: Image.asset(
+                                  'assets/images/google_play_button.png',
+                                  width: constraints.maxWidth * 0.2,
+                                ),
                               ),
                             ],
                           ),

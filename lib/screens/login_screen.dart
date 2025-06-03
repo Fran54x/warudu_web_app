@@ -26,46 +26,53 @@ class _LoginScreenState extends State<LoginScreen> {
   String password = "";
 
   Future<void> _login() async {
-    email = emailController.text;
-    password = passwordController.text;
+    try {
+      email = emailController.text;
+      password = passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, complete todos los campos')),
-      );
-      return;
-    }
-
-    final response = await http.post(Uri.parse('$baseUrl/login_administrador'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-          'user_type': userType ?? 0,
-        }));
-
-    if (response.statusCode == 200) {
-      var data = jsonDecode(response.body);
-      String username = data['username'];
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isAuthenticated', true);
-
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      authProvider.login();
-
-      if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushReplacementNamed(context, '/admin_widget',
-              arguments: {'username': username});
-        });
+      if (email.isEmpty || password.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Inicio de sesión exitoso')),
+          SnackBar(content: Text('Por favor, complete todos los campos')),
+        );
+        return;
+      }
+
+      final response =
+          await http.post(Uri.parse('$baseUrl/login_administrador'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'email': email,
+                'password': password,
+                'user_type': userType ?? 0,
+              }));
+
+      if (response.statusCode == 200) {
+        var data = jsonDecode(response.body);
+        String username = data['username'];
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isAuthenticated', true);
+
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        authProvider.login();
+
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(context, '/admin_widget',
+                arguments: {'username': username});
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Inicio de sesión exitoso')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Credenciales no válidas')),
         );
       }
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Credenciales no válidas')),
+        SnackBar(content: Text('Ocurrió un error al intentar contactar con el servidor: $e')),
       );
     }
   }

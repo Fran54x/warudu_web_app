@@ -28,11 +28,13 @@ Transferencias Internacionales de Datos: Podemos transferir y procesar tu inform
 
 Retención de Datos: Retenemos tu información personal solo durante el tiempo necesario para cumplir con los fines descritos en esta política, a menos que se requiera un período de retención más largo o permitido por la ley.
 
+Precios Ingredientes: Los precios de los ingredientes son aproximados y estan sujetos datos establecidos en base a los reportes de costes de PROFECO en zonas de Jalisco México, pueden entonces no ser exactos y variados.
+
+Precios Platillos: Los precios de los platillos se calculan a partir del precio de los ingredientes que lo componen, por lo que es una aproximación y no un valor exacto.
+
 Derechos de los Usuarios: Tienes derecho a acceder, corregir, eliminar o restringir el procesamiento de tu información personal. También puedes ejercer el derecho a la portabilidad de los datos. Para ejercer estos derechos, contáctanos en warudu29@gmail.com.
 
 Cambios a esta Política de Privacidad: Nos reservamos el derecho de actualizar esta política en cualquier momento. Te notificaremos cualquier cambio mediante la publicación de la nueva política en nuestra aplicación, página web y correo electrónico.
-
-Los precios de los ingredientes son aproximados y estan sujetos a precios establecidos en base a los reportes de costes de PROFECO en zonas de Jalisco México, pueden entonces no ser exactos y variados
 
 Contacto: Si tienes alguna pregunta o inquietud sobre nuestra política de privacidad, no dudes en contactarnos en warudu29@gmail.com.
   """;
@@ -55,7 +57,7 @@ Contacto: Si tienes alguna pregunta o inquietud sobre nuestra política de priva
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: white, size: 30),
                   onPressed: () async {
-                    //Navigator.pop(context); // Regresar a la pantalla anterior
+                    Navigator.pop(context); // Regresar a la pantalla anterior
                     final Uri url = Uri.parse('https://www.warudu.com');
                     if (await canLaunchUrl(url)) {
                       await launchUrl(url);
