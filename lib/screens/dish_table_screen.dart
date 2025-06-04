@@ -74,7 +74,12 @@ class _DishTableScreenState extends State<DishTableScreen> {
         });
       }
     } catch (e) {
-      print('Error al cargar platillos: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar platillos')),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo conectar con el servidor: Error 503')),
+      );
     } finally {
       setState(() => isLoading = false);
     }
@@ -89,6 +94,7 @@ class _DishTableScreenState extends State<DishTableScreen> {
       'preparacion': dish['preparacion'],
       'tiempo': dish['tiempo'] ?? 0,
       'ingredientes': dish['ingredientes'],
+      'costo_estimado': dish['costo_estimado'] ?? 0,
     };
   }
 
@@ -165,7 +171,6 @@ class _DishTableScreenState extends State<DishTableScreen> {
     }
   }
 
-  // El resto del código (build, _buildTable, etc.) permanece igual
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,73 +182,25 @@ class _DishTableScreenState extends State<DishTableScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (constraints.maxWidth > 550)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TitleWidget(text: "Platillos", size: 45),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: SearchBarWidget(
-                              controller: _searchController,
-                              onChanged: (value) {
-                                _filterDishes();
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          TextButtonWidget(
-                            onAddPressed: widget.onAddPressed,
-                            wHorizontal: 55,
-                            wVertical: 17,
-                            fontSize: 25,
-                            text: 'Agregar',
-                          ),
-                        ],
-                      )
-                    ],
-                  )
+                // Encabezado adaptable
+                if (MediaQuery.sizeOf(context).width >= 550)
+                  _buildDesktopHeader()
                 else
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TitleWidget(text: "Platillos", size: 32),
-                      SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButtonWidget(
-                          onAddPressed: widget.onAddPressed,
-                          wHorizontal: 40,
-                          wVertical: 13,
-                          fontSize: 18,
-                          text: 'Agregar',
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: SearchBarWidget(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            _filterDishes();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                SizedBox(height: 20),
-                if (constraints.maxWidth > minWidth)
-                  Expanded(child: _buildTable())
+                  _buildMobileHeader(),
+
+                const SizedBox(height: 20),
+
+                // Tabla adaptable
+                if (MediaQuery.sizeOf(context).width >= minWidth)
+                  Expanded(child: _buildTable()) // Versión desktop
                 else
-                  Expanded(
+                  SizedBox(
+                    // Versión móvil con scroll horizontal
+                    height: 500, // Altura fija (ajusta según necesites)
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: SizedBox(
-                        width: 910,
+                        width: 910, // Ancho mínimo para la tabla
                         child: _buildTable(),
                       ),
                     ),
@@ -253,6 +210,64 @@ class _DishTableScreenState extends State<DishTableScreen> {
           );
         },
       ),
+    );
+  }
+
+// Métodos auxiliares para organizar mejor el código
+  Widget _buildDesktopHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TitleWidget(text: "Platillos", size: 45),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: SearchBarWidget(
+                controller: _searchController,
+                onChanged: (value) => _filterDishes(),
+              ),
+            ),
+            const SizedBox(width: 20),
+            TextButtonWidget(
+              onAddPressed: widget.onAddPressed,
+              wHorizontal: 55,
+              wVertical: 17,
+              fontSize: 25,
+              text: 'Agregar',
+            ),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildMobileHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TitleWidget(text: "Platillos", size: 32),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: TextButtonWidget(
+            onAddPressed: widget.onAddPressed,
+            wHorizontal: 40,
+            wVertical: 13,
+            fontSize: 18,
+            text: 'Agregar',
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: SearchBarWidget(
+            controller: _searchController,
+            onChanged: (value) => _filterDishes(),
+          ),
+        ),
+      ],
     );
   }
 

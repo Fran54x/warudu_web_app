@@ -80,9 +80,11 @@ class _UserTableScreenState extends State<UserTableScreen> {
         });
       }
     } catch (e) {
-      print('Error al cargar usuarios: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cargar usuarios')),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo conectar con el servidor: Error 503')),
       );
     } finally {
       setState(() => isLoading = false);

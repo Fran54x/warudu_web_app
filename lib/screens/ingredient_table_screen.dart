@@ -82,9 +82,11 @@ class _IngredientTableScreenState extends State<IngredientTableScreen> {
         });
       }
     } catch (e) {
-      print('Error al cargar ingredientes: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cargar ingredientes')),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo conectar con el servidor: Error 503')),
       );
     } finally {
       setState(() => isLoading = false);

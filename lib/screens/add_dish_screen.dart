@@ -26,6 +26,8 @@ class _AddDishScreenState extends State<AddDishScreen> {
   //final TextEditingController _dificultadController = TextEditingController();
   final TextEditingController _linkRecetaController = TextEditingController();
   final TextEditingController _tipoPlatilloController = TextEditingController();
+  final TextEditingController _costoEstimadoController =
+      TextEditingController(); // Agregado para el costo estimado
   final TextEditingController _ingredientSearchController =
       TextEditingController();
   List<Map<String, dynamic>> availableIngredients = [];
@@ -61,6 +63,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
     _linkRecetaController.dispose();
     _tipoPlatilloController.dispose();
     _ingredientSearchController.dispose();
+    _costoEstimadoController.dispose();
     super.dispose();
   }
 
@@ -74,6 +77,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
     _linkRecetaController.clear();
     _tipoPlatilloController.clear();
     _ingredientSearchController.clear();
+    _costoEstimadoController.clear();
     selectedIngredients.clear();
     filteredIngredients = [];
   }
@@ -83,8 +87,14 @@ class _AddDishScreenState extends State<AddDishScreen> {
 
     setState(() => _isLoadingMore = true);
 
-    final url = Uri.parse(
-        '$baseUrl/ingredientes_ordenados_alfabeticamente?page=$page&limit=10${searchQuery != null ? '&query=$searchQuery' : ''}');
+    final queryParameters = {
+      'page': page.toString(),
+      'limit': '20',
+      if (searchQuery != null && searchQuery.isNotEmpty) 'query': searchQuery,
+    };
+
+    final url = Uri.parse('$baseUrl/ingredientes_exactos')
+        .replace(queryParameters: queryParameters);
 
     try {
       final response = await http.get(url);
@@ -159,6 +169,8 @@ class _AddDishScreenState extends State<AddDishScreen> {
           //_dificultadController.text = data['dificultad'].toString(); // 1 - 10
           _linkRecetaController.text = data['link_receta'];
           _tipoPlatilloController.text = data['tipo'];
+          _costoEstimadoController.text =
+              data['costo_estimado']?.toString() ?? '';
           selectedIngredients =
               List<Map<String, dynamic>>.from(data['ingredientes']);
           selectedIngredients.forEach((selectedIngredient) {
@@ -189,6 +201,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
       //'dificultad': 8,
       'link_receta': _linkRecetaController.text,
       'tipo': _tipoPlatilloController.text,
+      'costo_estimado': _costoEstimadoController.text,
       'ingredientes':
           selectedIngredients.map((ingredient) => ingredient['id']).toList(),
     });
@@ -209,7 +222,13 @@ class _AddDishScreenState extends State<AddDishScreen> {
         );
         _clearForm(); // Limpiar el formulario si se añadió un nuevo platillo
       } else {
-        print('Error en la petición: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(widget.isEditing
+                  ? 'Error al editar el platillo: ${response.statusCode}'
+                  : 'Error al agregar el platillo ${response.statusCode}')),
+        );
+        print('Error en la petición: ${response.body}');
       }
     } catch (e) {
       print('Error: $e');
@@ -295,6 +314,10 @@ class _AddDishScreenState extends State<AddDishScreen> {
                 label: "Tipo de Platillo",
                 controller: _tipoPlatilloController,
               ),
+              ValidatedInputField(
+                label: "Costo Estimado",
+                controller: _costoEstimadoController,
+              ),
               //dataInput("Valoración", 25, _valoracionController),
               //dataInput("Dificultad (1-10)", 25, _dificultadController),
               SizedBox(height: 20),
@@ -306,7 +329,7 @@ class _AddDishScreenState extends State<AddDishScreen> {
                   color: coral,
                 ),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 15),
               SizedBox(
                 height: 250, // Altura fija para que no colapse
                 child: Padding(

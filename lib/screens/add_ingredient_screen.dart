@@ -70,10 +70,10 @@ class _AddIngredientScreenState extends State<AddIngredientScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(widget.isEditing
-                  ? 'Error al editar el ingrediente'
-                  : 'Error al agregar el ingrediente')),
+                  ? 'Error al editar el ingrediente ${response.statusCode}'
+                  : 'Error al agregar el ingrediente ${response.statusCode}')),
         );
-        print('Error en la petición: ${response.statusCode}');
+        print('Error en la petición: ${response.body}');
       }
     } catch (e) {
       print('Error: $e');

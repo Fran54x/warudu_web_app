@@ -24,8 +24,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      //initialRoute: '/home',
-      initialRoute: '/admin_widget',
+      initialRoute: '/home',
+      //initialRoute: '/admin_widget',
       routes: {
         '/login_screen': (BuildContext context) => LoginScreen(),
         '/home': (BuildContext context) => HomeScreen(),
@@ -52,7 +52,7 @@ class AuthGuard extends StatelessWidget {
       });
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-  
+
     return child;
   }
 }

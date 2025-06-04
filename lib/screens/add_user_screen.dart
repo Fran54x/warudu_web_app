@@ -84,7 +84,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
         );
         _clearForm(); // Limpiar el formulario si se añadió un nuevo usuario
       } else {
-        print('Error en la petición: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(widget.isEditing
+                  ? 'Error al editar al usuario: ${response.statusCode}'
+                  : 'Error al agregar al usuario ${response.statusCode}')),
+        );
+        print('Error en la petición: ${response.body}');
       }
     } catch (e) {
       print('Error: $e');
@@ -238,5 +244,5 @@ class _AddUserScreenState extends State<AddUserScreen> {
     _correoController.dispose();
     _passwordController.dispose();
     super.dispose();
-  } 
+  }
 }
